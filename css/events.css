@@ -1,0 +1,114 @@
+#Sidebar form {
+	margin: 2px 8px 5px;
+}
+
+#Sidebar form p {
+	margin: 0;
+}
+	#Sidebar form p.message {
+		width: auto;
+	}
+	#Sidebar form p.message.bad {
+		background-color: #ffc1c1;
+		border-color: #ff8b8b;
+	}
+
+#Sidebar form div {
+	clear: both;
+	vertical-align: middle;
+}
+
+#Sidebar form label.left {
+	float: left;
+	width: 124px;
+	margin: 5px 0;
+	text-align: left;
+}
+	#Sidebar form div.email label.left {
+		width: 46px;
+	}
+
+#Sidebar form span.middleColumn {
+	float: right;
+	width: 60px;
+	margin: 0;
+	clear: none;
+	margin: 5px 0;
+	padding: 0;
+	text-align: right;
+}
+
+#Sidebar form span.middleColumn * {
+	width: 100%;
+}
+
+	#Sidebar form div.dropdown span.middleColumn select {
+		padding: 1px;
+	}
+	
+	#Sidebar form div.numeric span.middleColumn * {
+		width: 51px;
+		padding: 3.5px 4px;
+	}
+	
+	#Sidebar form div.email span.middleColumn {
+		width: 138px;
+	}
+	#Sidebar form div.email span.middleColumn * {
+		width: 128px;
+		padding: 3.5px 4px;
+	}
+
+#Sidebar form div.Actions {
+	margin-top: 10px;
+}
+
+#Sidebar form div.Actions input {
+	float: none;
+	margin: 0;
+}
+
+#InformationTable {
+	padding:5px;
+}
+	#InformationTable caption {
+		font-size:1.5em;
+	}
+	#InformationTable tr th {
+		font-size:1.4em;
+		font-weight:bold;
+		line-height:3em;
+	}
+	#InformationTable tr {
+		line-height:2em;
+	}
+	#InformationTable tr td {
+		font-size:1.2em;
+	}
+		#InformationTable tr td.price,
+		#InformationTable tr td.left {
+			font-weight:bold;
+		}
+
+/*
+ * Default styling for EventList
+ */	
+#EventList h2 {
+	font-size:1.5em;
+	margin-bottom:1em;
+}
+#EventList ul li {
+	padding:5px;
+}
+	#EventList ul li h4 {
+		font-size:1.2em;
+	}
+		#EventList ul li h4 a {
+			line-height:2em;
+		}
+			#EventList ul li h4 a:hover {
+				text-decoration:none;
+			}
+	#EventList ul li p {
+		font-size:1.1em;
+	}

@@ -1,0 +1,9 @@
+Burnbright changes:
+ * Registrations / events now only persist to DB on final purchase / book, so there are no unnecessary DB entries.
+ * Summary page with modify option
+ * Modularised code a bit more
+ * Added various hooks for extending
+ * Renamed classes to be more readable (eg: RSVP becomes EventRegistration)
+ * Allow extended classes to use custom templates eg: MyEvent_recieptEmail.ss
+ * Put less reliance on template files (eg: no need for Event.ss)
+ * Pruned alot of unused code & features that don't work

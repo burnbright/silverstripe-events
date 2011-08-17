@@ -1,0 +1,35 @@
+
+#EventSearchForm_SearchForm {
+	z-index: 100;
+	border: 1px solid #36A3BD;
+	width: 350px;
+}
+
+/**
+#statusMessage {
+	position: absolute;
+	z-index: 500;
+	bottom: 15px;
+	right: 30px;
+	text-align: left;
+	display:none;
+ 	padding: 15px 15px 15px 40px;
+ 	font-size: 16px;
+	font-weight: bold; 	
+ 	border: 1px solid #cc9;
+	color: #660;
+	background-color: #F9F9E3;
+}
+
+#statusMessage.good {
+	border-color: #9c9;
+	color: #060;
+	background: url(../images/alert-good.gif) #E2F9E3 7px no-repeat;
+}
+#statusMessage.bad {
+	border-color: #c99;
+	color: #fff;
+	background: url(../images/alert-bad.gif) #c00 7px no-repeat;
+	max-height: 600px;
+	overflow: auto;
+} **/

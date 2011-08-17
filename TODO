@@ -1,0 +1,16 @@
+TODO:
+
+ * Document the module better: Data model diagram. Feature list.
+ * Make sure payment module works with multiple modules
+ * Move codebase to GitHub
+ 
+ * Create a task that deletes attendees with no registrationid after x days.
+ 
+
+ * Security fixes: make sure forms can't be hacked (for ticket selection etc)
+ * Make MultipleBookings work with attendees TableListField
+ 		-it doesn't the needed loadDataFrom or a getDataObjectSet functions
+ * Modify system to always require one attendee, rather than treating the registration as the attendee data.
+ 	This makes switching between multi-bookings and single bookings easier.
+ * Internationalisation
+ * Do something about Ticket scenarios - I'm not sure these even work?

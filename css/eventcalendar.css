@@ -1,0 +1,11 @@
+#EventCalendarHolder {
+	border: 1px solid #36A3BD;
+}
+
+#EventCalendarHolder table.month {
+	border: 1px solid #36A3BD;
+}
+
+#calendar_today {
+	background-color: #36A3BD;
+}

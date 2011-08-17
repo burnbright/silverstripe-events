@@ -1,0 +1,232 @@
+<?xml version="1.0" ?>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+	<defs>
+		<filter filterRes="100" id="DropShadow" x="0" y="0">
+			
+               
+			<feGaussianBlur result="myblur" stdDeviation="3"/>
+			
+               
+			<feOffset dx="2" dy="4" in="MyBlur" result="movedBlur"/>
+			
+               
+			<feMerge>
+				
+                   
+				<feMergeNode in="movedBlur"/>
+				
+                   
+				<feMergeNode in="SourceGraphic"/>
+				
+               
+			</feMerge>
+			
+          
+		</filter>
+		<marker id="mCrowBall" orient="auto" refX="0" refY="0" style="overflow:visible">
+			
+            
+			<path d="M 0.0,2.5 L 7.5,0.0 L 0.0,-2.5" style="stroke:#000;stroke-width:1.0pt;marker-start:none;fill:none;"/>
+			
+            
+			<circle cx="10" cy="0" r="2.5" style="stroke-width:1pt; stroke: #000; fill:none;"/>
+			
+            
+		</marker>
+	</defs>
+	<g style="stroke:#000000;fill:#fff">
+		<rect height="595.0" id="" style="stroke:#000000;fill:#fff" width="842.0" x="0.0" y="0.0"/>
+		<rect height="11.0" id="" style="stroke:none" width="68.0" x="272.504" y="157.084"/>
+		<text id="" style="stroke:none;fill:#000000;font-family: Helvetica;font-size:9pt" x="272.504" y="157.084">
+			<tspan id="" style="text-align:center;font-size:9.0pt;font-family:Helvetica;,Sans-serif;fill:#000000" x="272.504" y="169.084">
+				BookingGroup
+			</tspan>
+		</text>
+		<path d="M 421.0,198.417 L 218.367,135.0" id="" style="filter:url(#DropShadow);marker-start:url(#mCrowBall);stroke:#000;marker-end:none;fill:none"/>
+		<g style="stroke:#000000;fill:#fff">
+			<rect height="14.0" id="" style="filter:url(#DropShadow)" width="90.0" x="151.0" y="121.0"/>
+			<text id="" style="filter:url(#DropShadow);fill:#000000;font-family: Helvetica;font-size:9pt" x="151.0" y="121.0">
+				<tspan id="" style="text-align:center;font-weght:bold;font-size:12.0pt;font-family:Helvetica;,Sans-serif;fill:#000000" x="151.0" y="133.0">
+					Group
+				</tspan>
+			</text>
+		</g>
+		<path d="M 421.0,326.423 L 148.222,232.0" id="" style="filter:url(#DropShadow);marker-start:url(#mCrowBall);stroke:#000;marker-end:none;fill:none"/>
+		<g style="stroke:#000000;fill:#fff">
+			<rect height="14.0" id="" style="filter:url(#DropShadow)" width="90.0" x="83.0" y="218.0"/>
+			<text id="" style="filter:url(#DropShadow);fill:#000000;font-family: Helvetica;font-size:9pt" x="83.0" y="218.0">
+				<tspan id="" style="text-align:center;font-weght:bold;font-size:12.0pt;font-family:Helvetica;,Sans-serif;fill:#000000" x="83.0" y="230.0">
+					Member
+				</tspan>
+			</text>
+		</g>
+		<rect height="52.0" id="" style="stroke:none;fill:none" width="258.0" x="15.0" y="24.0"/>
+		<text id="" style="stroke:none;fill:none;fill:#000000;font-family: Helvetica;font-size:18pt" x="15.0" y="24.0">
+			<tspan id="" style="font-weght:bold;font-size:18.0pt;font-family:Helvetica;,Sans-serif;fill:#000000" x="15.0" y="36.0">
+				Event Module Data Diagram
+			</tspan>
+			<tspan id="" style="font-weght:bold;font-size:12.0pt;font-family:Helvetica;,Sans-serif;fill:#000000" x="15.0" y="48.0">
+				As of Sam's refactoring - 13 April 2008
+			</tspan>
+			<tspan id="" style="font-weght:bold;font-size:12.0pt;font-family:Helvetica;,Sans-serif;fill:#000000" x="15.0" y="60.0">
+				
+			</tspan>
+			<tspan id="" style="font-weght:bold;font-size:12.0pt;font-family:Helvetica;,Sans-serif;fill:#000000" x="15.0" y="72.0">
+				Note: Over time, this diagram will step out of sync with the rest 
+			</tspan>
+			<tspan id="" style="font-weght:bold;font-size:12.0pt;font-family:Helvetica;,Sans-serif;fill:#000000" x="15.0" y="84.0">
+				of the application.
+			</tspan>
+		</text>
+		<g style="stroke:#000000;fill:#fff">
+			<rect height="14.0" id="" style="filter:url(#DropShadow)" width="90.0" x="249.0" y="314.0"/>
+			<text id="" style="filter:url(#DropShadow);fill:#000000;font-family: Helvetica;font-size:18pt" x="249.0" y="314.0">
+				<tspan id="" style="text-align:center;font-weght:bold;font-size:12.0pt;font-family:Helvetica;,Sans-serif;fill:#000000" x="249.0" y="326.0">
+					EventRegistrationStatus
+				</tspan>
+			</text>
+			<rect height="42.0" id="" style="filter:url(#DropShadow)" width="90.0" x="249.0" y="328.0"/>
+			<text id="" style="filter:url(#DropShadow);fill:#000000;font-family: Helvetica;font-size:18pt" x="249.0" y="328.0">
+				<tspan id="" style="text-align:left;font-size:12.0pt;font-family:Helvetica;,Sans-serif;fill:#000000" x="249.0" y="340.0">
+					Created
+				</tspan>
+				<tspan id="" style="text-align:left;font-size:12.0pt;font-family:Helvetica;,Sans-serif;fill:#000000" x="249.0" y="352.0">
+					Status
+				</tspan>
+				<tspan id="" style="text-align:left;font-size:12.0pt;font-family:Helvetica;,Sans-serif;fill:#000000" x="249.0" y="364.0">
+					Note
+				</tspan>
+			</text>
+		</g>
+		<path d="M 339.0,342.0 L 421.0,342.0" id="" style="filter:url(#DropShadow);stroke:#000;marker-end:none;fill:none"/>
+		<path d="M 488.462,423.0 L 634.396,247.5" id="" style="filter:url(#DropShadow);marker-start:url(#mCrowBall);stroke:#000;marker-end:none;fill:none"/>
+		<path d="M 605.0,212.5 L 511.0,212.5" id="" style="filter:url(#DropShadow);marker-start:url(#mCrowBall);stroke:#000;marker-end:none;fill:none"/>
+		<rect height="11.0" id="" style="stroke:none" width="44.0" x="444.0" y="93.654"/>
+		<text id="" style="stroke:none;fill:#000000;font-family: Helvetica;font-size:9pt" x="444.0" y="93.654">
+			<tspan id="" style="text-align:center;font-size:9.0pt;font-family:Helvetica;,Sans-serif;fill:#000000" x="444.0" y="105.654">
+				Children
+			</tspan>
+		</text>
+		<path d="M 466.0,149.5 L 466.0,64.0" id="" style="filter:url(#DropShadow);marker-start:url(#mCrowBall);stroke:#000;marker-end:none;fill:none"/>
+		<g style="stroke:#000000;fill:#fff">
+			<rect height="14.0" id="" style="filter:url(#DropShadow)" width="90.0" x="421.0" y="36.0"/>
+			<text id="" style="filter:url(#DropShadow);fill:#000000;font-family: Helvetica;font-size:9pt" x="421.0" y="36.0">
+				<tspan id="" style="text-align:center;font-weght:bold;font-size:12.0pt;font-family:Helvetica;,Sans-serif;fill:#000000" x="421.0" y="48.0">
+					EventHolder
+				</tspan>
+			</text>
+			<rect height="14.0" id="" style="filter:url(#DropShadow)" width="90.0" x="421.0" y="50.0"/>
+			<text id="" style="filter:url(#DropShadow);fill:#000000;font-family: Helvetica;font-size:9pt" x="421.0" y="50.0">
+				<tspan id="" style="text-align:left;font-size:12.0pt;font-family:Helvetica;,Sans-serif;fill:#000000" x="421.0" y="62.0">
+					Title
+				</tspan>
+			</text>
+		</g>
+		<g style="stroke:#000000;fill:#fff">
+			<rect height="14.0" id="" style="filter:url(#DropShadow)" width="117.0" x="605.0" y="177.5"/>
+			<text id="" style="filter:url(#DropShadow);fill:#000000;font-family: Helvetica;font-size:9pt" x="605.0" y="177.5">
+				<tspan id="" style="text-align:center;font-weght:bold;font-size:12.0pt;font-family:Helvetica;,Sans-serif;fill:#000000" x="605.0" y="189.5">
+					EventTicket
+				</tspan>
+			</text>
+			<rect height="56.0" id="" style="filter:url(#DropShadow)" width="117.0" x="605.0" y="191.5"/>
+			<text id="" style="filter:url(#DropShadow);fill:#000000;font-family: Helvetica;font-size:9pt" x="605.0" y="191.5">
+				<tspan id="" style="text-align:left;font-size:12.0pt;font-family:Helvetica;,Sans-serif;fill:#000000" x="605.0" y="203.5">
+					Type
+				</tspan>
+				<tspan id="" style="text-align:left;font-size:12.0pt;font-family:Helvetica;,Sans-serif;fill:#000000" x="605.0" y="215.5">
+					Price
+				</tspan>
+				<tspan id="" style="text-align:left;font-size:12.0pt;font-family:Helvetica;,Sans-serif;fill:#000000" x="605.0" y="227.5">
+					TotalNumber
+				</tspan>
+				<tspan id="" style="text-align:left;font-size:12.0pt;font-family:Helvetica;,Sans-serif;fill:#000000" x="605.0" y="239.5">
+					NumberPerMember
+				</tspan>
+			</text>
+		</g>
+		<path d="M 466.0,307.0 L 466.0,275.5" id="" style="filter:url(#DropShadow);marker-start:url(#mCrowBall);stroke:#000;marker-end:none;fill:none"/>
+		<path d="M 469.971,423.0 L 467.716,377.0" id="" style="filter:url(#DropShadow);stroke:#000;marker-end:none;fill:none"/>
+		<g style="stroke:#000000;fill:#fff">
+			<rect height="14.0" id="" style="filter:url(#DropShadow)" width="100.0" x="421.0" y="423.0"/>
+			<text id="" style="filter:url(#DropShadow);fill:#000000;font-family: Helvetica;font-size:9pt" x="421.0" y="423.0">
+				<tspan id="" style="text-align:center;font-weght:bold;font-size:12.0pt;font-family:Helvetica;,Sans-serif;fill:#000000" x="421.0" y="435.0">
+					EventRegistrationAttendee
+				</tspan>
+			</text>
+			<rect height="28.0" id="" style="filter:url(#DropShadow)" width="100.0" x="421.0" y="437.0"/>
+			<text id="" style="filter:url(#DropShadow);fill:#000000;font-family: Helvetica;font-size:9pt" x="421.0" y="437.0">
+				<tspan id="" style="text-align:left;font-size:12.0pt;font-family:Helvetica;,Sans-serif;fill:#000000" x="421.0" y="449.0">
+					FirstName
+				</tspan>
+				<tspan id="" style="text-align:left;font-size:12.0pt;font-family:Helvetica;,Sans-serif;fill:#000000" x="421.0" y="461.0">
+					Surname
+				</tspan>
+			</text>
+		</g>
+		<g style="stroke:#000000;fill:#fff">
+			<rect height="14.0" id="" style="filter:url(#DropShadow)" width="90.0" x="421.0" y="307.0"/>
+			<text id="" style="filter:url(#DropShadow);fill:#000000;font-family: Helvetica;font-size:9pt" x="421.0" y="307.0">
+				<tspan id="" style="text-align:center;font-weght:bold;font-size:12.0pt;font-family:Helvetica;,Sans-serif;fill:#000000" x="421.0" y="319.0">
+					EventRegistration
+				</tspan>
+			</text>
+			<rect height="42.0" id="" style="filter:url(#DropShadow)" width="90.0" x="421.0" y="321.0"/>
+			<text id="" style="filter:url(#DropShadow);fill:#000000;font-family: Helvetica;font-size:9pt" x="421.0" y="321.0">
+				<tspan id="" style="text-align:left;font-size:12.0pt;font-family:Helvetica;,Sans-serif;fill:#000000" x="421.0" y="333.0">
+					Places
+				</tspan>
+				<tspan id="" style="text-align:left;font-size:12.0pt;font-family:Helvetica;,Sans-serif;fill:#000000" x="421.0" y="345.0">
+					TotalCost
+				</tspan>
+				<tspan id="" style="text-align:left;font-size:12.0pt;font-family:Helvetica;,Sans-serif;fill:#000000" x="421.0" y="357.0">
+					Status
+				</tspan>
+			</text>
+			<rect height="14.0" id="" style="filter:url(#DropShadow)" width="90.0" x="421.0" y="363.0"/>
+			<text id="" style="filter:url(#DropShadow);fill:#000000;font-family: Helvetica;font-size:9pt" x="421.0" y="363.0">
+				<tspan id="" style="text-align:left;font-size:12.0pt;font-family:Helvetica;,Sans-serif;fill:#000000" x="421.0" y="375.0">
+					pay
+				</tspan>
+			</text>
+		</g>
+		<g style="stroke:#000000;fill:#fff">
+			<rect height="14.0" id="" style="filter:url(#DropShadow)" width="90.0" x="421.0" y="149.5"/>
+			<text id="" style="filter:url(#DropShadow);fill:#000000;font-family: Helvetica;font-size:9pt" x="421.0" y="149.5">
+				<tspan id="" style="text-align:center;font-weght:bold;font-size:12.0pt;font-family:Helvetica;,Sans-serif;fill:#000000" x="421.0" y="161.5">
+					Event
+				</tspan>
+			</text>
+			<rect height="98.0" id="" style="filter:url(#DropShadow)" width="90.0" x="421.0" y="163.5"/>
+			<text id="" style="filter:url(#DropShadow);fill:#000000;font-family: Helvetica;font-size:9pt" x="421.0" y="163.5">
+				<tspan id="" style="text-align:left;font-size:12.0pt;font-family:Helvetica;,Sans-serif;fill:#000000" x="421.0" y="175.5">
+					Title
+				</tspan>
+				<tspan id="" style="text-align:left;font-size:12.0pt;font-family:Helvetica;,Sans-serif;fill:#000000" x="421.0" y="187.5">
+					StartDate
+				</tspan>
+				<tspan id="" style="text-align:left;font-size:12.0pt;font-family:Helvetica;,Sans-serif;fill:#000000" x="421.0" y="199.5">
+					StartTime
+				</tspan>
+				<tspan id="" style="text-align:left;font-size:12.0pt;font-family:Helvetica;,Sans-serif;fill:#000000" x="421.0" y="211.5">
+					FinishDate
+				</tspan>
+				<tspan id="" style="text-align:left;font-size:12.0pt;font-family:Helvetica;,Sans-serif;fill:#000000" x="421.0" y="223.5">
+					FinishTime
+				</tspan>
+				<tspan id="" style="text-align:left;font-size:12.0pt;font-family:Helvetica;,Sans-serif;fill:#000000" x="421.0" y="235.5">
+					Capacity
+				</tspan>
+				<tspan id="" style="text-align:left;font-size:12.0pt;font-family:Helvetica;,Sans-serif;fill:#000000" x="421.0" y="247.5">
+					Status
+				</tspan>
+			</text>
+			<rect height="14.0" id="" style="filter:url(#DropShadow)" width="90.0" x="421.0" y="261.5"/>
+			<text id="" style="filter:url(#DropShadow);fill:#000000;font-family: Helvetica;font-size:9pt" x="421.0" y="261.5">
+				<tspan id="" style="text-align:left;font-size:12.0pt;font-family:Helvetica;,Sans-serif;fill:#000000" x="421.0" y="273.5">
+					register
+				</tspan>
+			</text>
+		</g>
+	</g>
+</svg>
