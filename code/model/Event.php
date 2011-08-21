@@ -3,11 +3,11 @@
  * An event page.
  * This represents a single event, and allows a user to register
  * via a registration form.
- * 
+ *
  * @package events
  */
 class Event extends Page {
-	
+
 	public static $db = array(
 		'Description' => 'Text',
 		'StartDate' => 'Date',
@@ -18,46 +18,46 @@ class Event extends Page {
 		'EventContact' => 'Varchar',
 		'EventContactEmail' => 'Varchar',
 		'EventStatus' => "Enum('Available,Cancelled','Available')", // "Status" is already used on SiteTree
-		
+
 		'OnlineBooking' => 'Boolean',
 		'BookingPermission' => "Enum('Anyone,LoggedInUsers,Group','LoggedInUsers')",
 		'MultipleBooking' => 'Boolean',
-		'ShowDescriptions' => 'Boolean',	
+		'ShowDescriptions' => 'Boolean',
 		'FormOnSeparatePage' => 'Boolean',
-		
+
 		'ReceiptContent' => 'HTMLText',
 		'BCCContact' => 'Boolean'
 	);
-	
+
 	public static $has_one = array(
 		'BookingGroup' => 'Group'
 	);
-	
+
 	public static $has_many = array(
 		'Tickets' => 'EventTicket',
 		'EventRegistrations' => 'EventRegistration'
 	);
-	
+
 	public static $many_many = array();
-	
+
 	public static $belongs_many_many = array();
-	
+
 	public static $defaults = array(
 		'EventStatus' => 'Available',
 		'BookingPermission' => 'Anyone'
 	);
-	
+
 	static $icon  = 'events/images/date';
-	
+
 	function getCMSFields() {
 		SiteTree::disableCMSFieldsExtensions();
 		$fields = parent::getCMSFields();
 		SiteTree::enableCMSFieldsExtensions();
-		
+
 		// Add content fields
 		$fields->addFieldToTab('Root.Content.Main', new TextareaField('Description', 'Short Description'), 'Content');
 		$fields->addFieldToTab('Root.Content.Main', new DropdownField('EventStatus', 'Event status', $this->obj('EventStatus')->enumValues(), '', null, '(Select a status)'), 'Description');
-		
+
 		// Add time/date fields
 		$fields->addFieldToTab('Root.Content.Dates', new HeaderField('Event Start'));
 		$fields->addFieldToTab('Root.Content.Dates', new CalendarDateField('StartDate', 'Date'));
@@ -65,10 +65,10 @@ class Event extends Page {
 		$fields->addFieldToTab('Root.Content.Dates', new HeaderField('Event End'));
 		$fields->addFieldToTab('Root.Content.Dates', new CalendarDateField('FinishDate', 'Date'));
 		$fields->addFieldToTab('Root.Content.Dates', new DropdownTimeField('FinishTime', 'Time'));
-		
+
 		// Add tickets table
 		$fields->addFieldToTab('Root.Content.Tickets', $this->getEventTicketsTable());
-		
+
 		// Add booking options
 		$fields->addFieldToTab('Root.Content', new Tab('Booking Options'));
 		$fields->addFieldToTab('Root.Content.BookingOptions', new HeaderField('Booking Form'));
@@ -76,10 +76,10 @@ class Event extends Page {
 		$fields->addFieldToTab('Root.Content.BookingOptions', new CheckboxField('MultipleBooking', 'Allow multiple bookings at once'));
 		$fields->addFieldToTab('Root.Content.BookingOptions', new CheckboxField('ShowDescriptions', 'Show ticket descriptions'));
 		$fields->addFieldToTab('Root.Content.BookingOptions', new CheckboxField('FormOnSeparatePage', 'Show form on a separate page'));
-		
+
 		$fields->addFieldToTab('Root.Content.BookingOptions', new NumericField('Capacity', 'Registration Limit', '', 3));
 		$fields->addFieldToTab('Root.Content.BookingOptions', new LiteralField('CapacityHelp', '<p>Leave capacity blank for no limit. Also note that the use of ticket limits override this capacity field.</p>'));
-		
+
 		$fields->addFieldToTab('Root.Content.BookingOptions', new HeaderField('Who Can Book For This Event?'));
 		$fields->addFieldToTab('Root.Content.BookingOptions', new OptionsetField(
 			'BookingPermission',
@@ -91,30 +91,30 @@ class Event extends Page {
 			)
 		));
 		$fields->addFieldToTab('Root.Content.BookingOptions', new DropdownField('BookingGroupID', '', Group::map()));
-		
+
    		//Add contact details
 		$fields->addFieldToTab("Root.Content.Main", new TextField("EventContact","Event Contact"),"Description");
 		$fields->addFieldToTab("Root.Content.Main", new TextField("EventContactEmail","Contact Email"),"Description");
-	
+
 		//Reports:
 		$fields->addFieldToTab('Root.Registrations',new LiteralField('RegistrationsHelp','<p>Registrations that have been completed.</p>'));
 		//$fields->addFieldToTab('Root.Registrations',new LiteralField('Enter Registration','<p><a class="addreg" href="#addreg">Add registration</a></p>'));
 		$fields->addFieldToTab("Root.Registrations", $this->getEventRegistrationTable());
+		$fields->addFieldToTab("Root.Registrations",new LiteralField('backendregister','<p><a href="admin/events" class="newregistraion action button">Add New Registration</a></p>'));
+
 		//if($this->MultipleBooking)
 			$fields->addFieldToTab('Root.Attendees', $this->getAttendeesTable());
-		
+
 		//emails
 		$fields->addFieldToTab("Root.Content.Emails",new CheckboxField('BCCContact','send BCC to event contact'));
-		$fields->addFieldToTab("Root.Content.Emails",new HtmlEditorField('ReceiptContent','Receipt Content'));	
-		
+		$fields->addFieldToTab("Root.Content.Emails",new HtmlEditorField('ReceiptContent','Receipt Content'));
+
 		//summary
-		
+
 		///TODO: add summary tab that shows: paid/unpaid , total income, registration numbers - by status and a total, attendee numbers
-		
-		$fields->push(new LiteralField('backendregister','<a href="EventAdminController" class="newregistraion action button" style="position:absolute; bottom:-25px;left:1px;font-weight:bold;">Create New Registration</a>'));
-				
+
 		$this->extend('updateCMSFields', $fields);
-		
+
 		return $fields;
 	}
 
@@ -122,28 +122,28 @@ class Event extends Page {
 
 		$where = '`EventID` = ' . $this->ID;
 		$sort = 'Created';
-		
+
 		$fieldList = array(
 				'ID' => 'ID',
 				'FirstName' => 'First Name',
 				'Surname' => 'Surname',
 				'NiceDate' => 'Date',
 				'Email' => 'Email',
-				'Places' => 'Places', 
+				'Places' => 'Places',
 				'Status' => 'Reg Status',
 		);
-		
+
 		if($this->Tickets()->Count() > 0){
 			$fieldList['TotalCost'] = 'Cost';
 			$fieldList['Payment.ClassName'] = 'Payment Type'; //TODO: change to use Payment::get_supported_methods() for nice name;
 			$fieldList['Payment.Status'] = 'Payment Status';
 		}
-		
+
 		$table = new ComplexTableField(
 			$this,
-			'EventRegistrationReport', 
+			'EventRegistrationReport',
 			'EventRegistration',
-			$fieldList, 
+			$fieldList,
 			'getCMSFields',
 			$where,
 			$sort
@@ -153,11 +153,11 @@ class Event extends Page {
 	}
 
 	public function getAttendeesTable() {
-				
+
 		$where = 'EventRegistration.EventID = ' . $this->ID;
 		$sort = 'Surname ASC, FirstName ASC';
 		$join = 'INNER JOIN EventRegistration ON `EventRegistrationID` = `EventRegistration`.ID INNER JOIN EventTicket ON EventAttendee.TicketID = EventTicket.ID';
-		
+
 		$table = new ComplexTableField(
 			$this,
 			'AttendeesField',
@@ -179,7 +179,7 @@ class Event extends Page {
 		//$table->setParentClass('EventRegistration');
 		return $table;
 	}
-	
+
 	public function getEventTicketsTable() {
 		$where = "`EventID` = 0 OR `EventID` = '$this->ID'";
 		$table = new HasManyComplexTableField(
@@ -188,7 +188,7 @@ class Event extends Page {
 			'EventTicket',
 			array(
 				'Type' => 'Type',
-				'NumberPerMember' => 'Member Limit',				
+				'NumberPerMember' => 'Member Limit',
 				'TotalNumber' => 'Overall Limit',
 				'Price' => 'Price'
 			),
@@ -198,7 +198,17 @@ class Event extends Page {
 		$table->setAddTitle('A Ticket');
 		return $table;
 	}
-	
+
+	/**
+	 * Gets all the available upcoming events.
+	 * ie: it will exclude cancelled events.
+	 * @param $interval allows you to specify how many days back from now to include. eg: all events occuring after 3 days ago.
+	 */
+	static function current_events($interval = null){
+		$interval = ($interval) ? " - INTERVAL $interval DAY" : "";
+		return DataObject::get("Event","\"StartDate\" >= DATE(NOW()) $interval AND STATUS != 'Cancelled'");
+	}
+
 	/**
 	 * If event contact is a website, provide a link to it, else just provide the event contact name.
 	 */
@@ -211,7 +221,7 @@ HTML;
 			return $this->EventContact;
 		}
 	}
-	
+
 	function removeAllEventRegistration() {
 		$where = "EventID = $this->ID";
 		$regs = DataObject::get("EventRegistration", $where);
@@ -221,7 +231,7 @@ HTML;
 			}
 		}
 	}
-	
+
 	/**
 	 * Get an event calendar for this event.
 	 */
@@ -232,9 +242,9 @@ HTML;
 		$eventCalendar = new EventCalendar($month, $events);
 		return $eventCalendar;
 	}
-	
-	
-	
+
+
+
 	/**
 	 * Get the last date of this event (the finish date if it exists, otherwise the start date)
 	 * @return Date
@@ -242,7 +252,7 @@ HTML;
 	function EndDate() {
 		return $this->FinishDate ? $this->obj('FinishDate') : $this->obj('StartDate');
 	}
-	
+
 	/**
 	 * Checks if this event has been cancelled.
 	 * @return boolean
@@ -250,7 +260,7 @@ HTML;
 	function IsCancelled() {
 		return $this->EventStatus == "Cancelled";
 	}
-	
+
 	/**
 	 * Checks if this event has already passed.
 	 * @return boolean
@@ -258,7 +268,7 @@ HTML;
 	function IsPast() {
 		return $this->EndDate()->InPast();
 	}
-	
+
 	/**
 	 * Checks if this event is upcoming (that is, it hasn't started yet).
 	 * @return boolean
@@ -266,7 +276,7 @@ HTML;
 	function IsUpcoming() {
 		return $this->StartDate()->InFuture();
 	}
-	
+
 	/**
 	 * Checks if this event is currently running.
 	 * @return boolean
@@ -276,13 +286,13 @@ HTML;
 		$isFuture = $this->IsUpcoming();
 		return !$isPast && !$isFuture;
 	}
-	
+
 	function HasSparePlaces(){
 		if($this->Tickets()->Count() > 0 && (!$this->AvailableTickets() || $this->AvailableTickets()->Count() <= 0))
 			return false;
 		return (!$this->Capacity || !$this->AllAttendees() || ($this->AllAttendees()->Count() < $this->Capacity));
 	}
-	
+
 	/**
 	 * Checks if this event only runs for one day
 	 * @return boolean
@@ -290,11 +300,11 @@ HTML;
 	function IsOneDayEvent() {
 		return $this->StartDate() === $this->EndDate();
 	}
-	
+
 	function AllAttendees(){
 		return DataObject::get('EventAttendee','EventRegistration.EventID = ' . $this->ID,'','INNER JOIN EventRegistration ON `EventRegistrationID` = `EventRegistration`.ID');
 	}
-	
+
 	function NumberOfEventRegistrationS() {
 
 		$where = "EventID = {$this->ID} AND Status = 'Accepted'";
@@ -304,7 +314,7 @@ HTML;
 		}
 		return 0;
 	}
-	
+
 	/**
 	 * Get a short description of this event (no more than 50 words).
 	 * @return string
@@ -320,7 +330,7 @@ HTML;
 			return strip_tags($shortDes->Summary(50));
 		}
 	}
-	
+
 	/**
 	 * Check if this event can be booked.
 	 * @return boolean
@@ -334,23 +344,23 @@ HTML;
 		if($this->BookingPermission == "Group" && !Member::currentUser()->inGroup($this->BookingGroup())) return false;
 		$isPast = $this->IsPast();
 		$isCancelled = $this->IsCancelled();
-		
+
 		return (!$isPast && !$isCancelled);
 	}
-	
-	
+
+
 	/**
 	 * Check if member is already booked for the event
 	 */
 	function checkAlreadyBooked($member){
 		//TODO: look up member id / Member::get_unique_identifier_field() in list of attendees for this event
-		
+
 		if(!$member) return false;
 		$allattendees = $this->AllAttendees();
 		if(!$allattendees) return false;
-		return (bool)($allattendees->find('MemberID',$member->ID));		
+		return (bool)($allattendees->find('MemberID',$member->ID));
 	}
-	
+
 	/**
 	 * Check if tickets are available.
 	 * Input is an array TicketID => NumberRequested.
@@ -359,7 +369,7 @@ HTML;
 	function checkTicketsAvailable($requestedTickets) {
 		foreach($requestedTickets as $ticketType => $numRequested) {
 			$ticket = DataObject::get_by_id('EventTicket', $ticketType);
-			
+
 			// Check there are enough free tickets
 			if($ticket->TotalNumber && ($ticket->Attendees()->Count() + $numRequested) > $ticket->TotalNumber) {
 				return false;
@@ -369,13 +379,13 @@ HTML;
 				return false;
 			}
 		}
-		
+
 		// If we get this far then all tickets are available
 		return true;
 	}
-	
+
 	function AvailableTickets(){
-		
+
 		$sqlQuery = new SQLQuery(
 			 $select = "*, Count(EventTicket.ID) as Count",
 			 $from = array('`EventTicket` INNER JOIN `EventAttendee` ON `EventAttendee`.`TicketID` = `EventTicket`.`ID`'),
@@ -385,22 +395,22 @@ HTML;
 			 $having = "Count >= `EventTicket`.`TotalNumber` AND `EventTicket`.`TotalNumber` > 0",
 			 $limit = ""
 		);
-		
+
 		//TODO: join with registration too...otherwise there might be rouge attendees with no reg
-		
+
 		$result = $sqlQuery->execute();
-		
+
 		$ids = array();
 		foreach($result as $ticket){
 			$ids[] = $ticket['TicketID'];
 		}
-		
+
 		$filter = (count($ids) > 0) ? " AND ID NOT IN(".implode(',',$ids).")" : "";
 		$tickets = DataObject::get('EventTicket','EventID = '.$this->ID.$filter);
-		
+
 		return $tickets;
 	}
-	
+
 	/**
 	 * Get successful EventRegistrations.
 	 * @return DataObjectSet
@@ -417,7 +427,7 @@ HTML;
 			return $successfulBookings;
 		}
 	}
-	
+
 	/**
 	 * Get the number of places left.
 	 * @return int
@@ -425,14 +435,14 @@ HTML;
 	public function getPlacesLeft(){
 		return $this->Capacity - $this->getBookedPlaces();
 	}
-	
+
 	/**
 	 * Get the number of booked places.
 	 * @return int
 	 */
 	public function getBookedPlaces(){
 		$successfulBookings = $this->successfulBookings();
-		
+
 		if($successfulBookings){
 			foreach($successfulBookings as $successfulBooking){
 				$bookedPlaces += $successfulBooking->getTotalPlaces();
@@ -440,17 +450,17 @@ HTML;
 		}
 		return $bookedPlaces;
 	}
-	
+
 	public function getDateQuerystring() {
 		return isset($_GET['calendardate']) ? $_GET['calendardate'] : "";
 	}
-	
+
 	public function sendBookingConfirmedEmail(){
 		$email = new Email(); //TODO: finish this
 		$email->send();
 		//TODO: send attendees notification email? (requires attendees to have email)
 	}
-	
+
 	/**
 	 * Get all attendees with 'Accepted' registrations
 	 */
@@ -462,7 +472,7 @@ HTML;
 		$attendees =  DataObject::get('EventAttendee',$where,$sort,$join);
 		return $attendees;
 	}
-	
+
 	/**
 	 * Get all successful registrations
 	 */
@@ -470,38 +480,38 @@ HTML;
 		$registrations = DataObject::get('EventRegistration','EventRegistration.EventID = ' . $this->ID . ' AND Status = "Accepted"');
 		return $registrations;
 	}
-	
+
 	/**
 	 * Link to the modify page
 	 */
 	function ModifyLink(){
 		return ($this->FormOnSeparatePage) ? $this->Link('register') : $this->Link();
 	}
-	
+
 	function onBeforeWrite(){
 		parent::onBeforeWrite();
-		
+
 		if(strtotime($this->FinishDate) < strtotime($this->StartDate)){ //empty finish date if it is before start
 			$this->FinishDate = null;
 			$this->FinishTime = null;
-		}	
+		}
 	}
-	
+
 	/**
 	 * Stub for extending in sub classes
 	 */
 	function updateAttendeeCost($cost, $attendee){
 		$this->extend('updateAttendeeCost',&$cost,&$attendee);
-		return $cost;	
+		return $cost;
 	}
-	
+
 }
 
 /**
  * Controller for an Event.
  */
 class Event_Controller extends Page_Controller {
-	
+
 	static $allowed_actions = array(
 		'BookingForm',
 		'PaymentForm',
@@ -514,48 +524,48 @@ class Event_Controller extends Page_Controller {
 		'book',
 		'modify'
 	);
-		
+
 	/**
 	 * Include styling for the events section.
-	 */  
+	 */
 	function init() {
 		Requirements::themedCSS('events');
-		
+
 		// If ticket descriptions are enabled, include the necessary javascript
 		if($this->ShowDescriptions) {
 			Requirements::javascript('jsparty/prototype.js');
 			Requirements::javascript('jsparty/behaviour.js');
 			Requirements::javascript('events/javascript/tickettypes.js');
 		}
-		
+
 		parent::init();
 	}
-	
+
 
 	/**
 	 * Session tools.
 	 */
-	
+
 	function clearSession(){
 		Session::clear('EventFormData.'.$this->ID); //clear session data
 		Session::save('EventFormData.'.$this->ID);
 	}
-	
+
 	function getSessionData(){
-		return Session::get('EventFormData.'.$this->ID);		
+		return Session::get('EventFormData.'.$this->ID);
 	}
-	
+
 	function setSessionData($data){
 		$this->clearSession(); //seems to be necessary, otherwise session data gets ammended, and not replaced
 		Session::set('EventFormData.'.$this->ID,$data);
 	}
-	
+
 	function clearform(){
 		$this->clearSession();
 		Director::redirect($this->ModifyLink());
 	}
-	
-	
+
+
 	/**
 	 * Set the form for index.
 	 */
@@ -564,7 +574,7 @@ class Event_Controller extends Page_Controller {
 			"Form" => $this->initForm()
 		);
 	}
-	
+
 	/**
 	 * Separate register page if desired. Can be chosen in CMS.
 	 */
@@ -574,17 +584,17 @@ class Event_Controller extends Page_Controller {
 			"Form" => $this->initForm()
 		);
 	}
-	
+
 	/**
 	 * Handle the various scenarios where tickets run out, event has passed, members only etc...
 	 */
 	protected function initForm(){
-		
+
 		if(!$this->OnlineBooking) return null;
-		
+
 		$form = ($this->checkCanBook()) ? $this->BookingForm() : "<p class=\"message\">"._t('Event.REGISTERPERMISSONMESSAGE','You do not have permission to register for this event. You may need to log in.')."</p>" ;
-		$form = ($this->FormOnSeparatePage && Director::urlParam('Action') != 'register') ? "<a href=\"".$this->Link('register')."\" class=\"registerlink button\">Register</a>" : $form; 
-		
+		$form = ($this->FormOnSeparatePage && Director::urlParam('Action') != 'register') ? "<a href=\"".$this->Link('register')."\" class=\"registerlink button\">Register</a>" : $form;
+
 		if(!$this->HasSparePlaces())
 			$form = "<p class=\"message bad\">The event is now full sorry.</p>";
 		if($this->checkAlreadyBooked(Member::currentUser()) && !$this->MultipleBooking)
@@ -595,85 +605,85 @@ class Event_Controller extends Page_Controller {
 			$form = "<p class=\"message bad\">The event has been cancelled.</p>";
 		return $form;
 	}
-	
-	
+
+
 	function BookingForm() {
-		$form = new EventRegistrationForm($this, 'BookingForm');		
+		$form = new EventRegistrationForm($this, 'BookingForm');
 		return $form;
 	}
-	
-	
+
+
 	/**
 	 * Do the actual booking
-	 */	
+	 */
 	function book(){
-		
+
 		if(!$this->getSessionData()){ //don't allow viewing page if session data isn't available
 			Director::redirect($this->ModifyLink());
 			return;
 		}
 		//TODO: final ticket availability check
-		
+
 		//create real registration object
 		$registration = $this->generateRegistration(true,true);
 		$registration->sendReceipt();
 		$registration->Status = 'Accepted'; //TODO: payment
 		$registration->write();
-		
+
 		$this->clearSession();
 		//TODO: redirect to event home, or just display success message?
 		return array(
 			'Content' => '<p>'._t('Event.BOOKINGSUCCESSMESSAGE','Booking made successfully. You have been sent a confirmation email.').'</p>'
 		);
 	}
-	
-	
+
+
 	/**
 	 * Action for redirecting away from Form based action.
 	 */
 	function summarydirect($data,$form){
 		$this->setSessionData($data); //store session data
-		Director::redirect($this->Link('summary'));		
+		Director::redirect($this->Link('summary'));
 	}
-	
+
 	/**
 	 * Display a summary that includes entered registration details, along with a price, if appropriate.
-	 * 
+	 *
 	 * A payment form will show if needed.
-	 * 
-	 * Submitting the form on this page will write everything to the database. 
-	 * 
+	 *
+	 * Submitting the form on this page will write everything to the database.
+	 *
 	 */
-	 
+
 	function summary() {
 
 		$data = $this->getSessionData();
 		$form = $this->BookingForm();
 		$form->loadDataFrom($data);
-		
+
 		//create temp registration for calculating costs etc
 		$registration = $this->generateRegistration(); //false = don't write to DB
 		$totalcost = $registration->TotalCost;
-		
+
 		if($this->Tickets() && $this->Tickets()->exists()){
 			//TODO: make sure a ticket id has been selected, & make sure selected ticket belongs to this event
 		}
-		
+
 		if($totalcost > 0) {
 			//redirect to payment page
 			Session::set('EventFormData.'.$this->ID.'.totalcost',$totalcost);
 			Director::redirect($this->Link('payment'));
 			return false;
-		}	
-		
-		$summaryform = unserialize(serialize($form)); 		
+		}
+
+		$summaryform = unserialize(serialize($form));
 		$summaryform->makeReadonly();
-		
+
 		$summaryform->setActions(new FieldSet(
 			$modifyaction = new FormAction('modify','Modify'),
 			$bookaction = new FormAction('book','Book')
 		));
-		
+
 		$registration->extend('updateBookingSummaryForm',$summaryform);
 
 		return array(
@@ -682,7 +692,7 @@ class Event_Controller extends Page_Controller {
 			'Content' => ''
 		);
 	}
-	
+
 	//Payment page
 	function payment(){
 		return array(
@@ -690,31 +700,31 @@ class Event_Controller extends Page_Controller {
 			"Form" => $this->PaymentForm()
 		);
 	}
-	
+
 	function PaymentForm(){
 		$form = new EventPaymentForm($this,'PaymentForm');
 		$this->data()->extend('updatePaymentForm', $form);
 		return $form;
 	}
-	
+
 	/**
 	 * This function allows the payment attendees summary template to be modified in sub-classes
 	 */
 	function attendeessummarytemplate(){
 		return "EventAttendeesSummary";
 	}
-	
-	
+
+
 	/**
 	 * Do the actual booking with payment.
 	 */
 	function processpayment($data, $form) {
-				
+
 		if(!$this->getSessionData()){
 			Director::redirect($this->ModifyLink());
 			return false;
 		}
-				
+
 		$registration = $this->generateRegistration(true,true);
 
 		//create payment
@@ -723,32 +733,32 @@ class Event_Controller extends Page_Controller {
 			user_error(get_class($payment) . ' is not a Payment object!', E_USER_ERROR);
 		}
 		$form->saveInto($payment);
-		
+
 		$payment->EventRegistrationID = $registration->ID;
 		$payment->Amount = $registration->TotalCost;
 		$payment->write();
-		
+
 		$this->data()->extend('onBeforePayment', &$registration, &$payment, &$data, &$form);
-		
+
 		$result = $payment->processPayment($data, $form);
-		
+
 		$this->clearSession();
-		
+
 		if($result->isProcessing()) {
 			$registration->Status = 'Pending';
 			$registration->PaymentID = $payment->ID;
 			$registration->write();
 			return $result->getValue();
 		}
-		
-		
+
+
 		if($result->isSuccess()) {
 			if($payment->Status == 'Pending') {
 				$registration->Status = 'Pending';
 				$registration->PaymentID = $payment->ID;
 				$registration->write();
 				$registration->sendReceipt();
-				
+
 				return array(
 					'Content' => '<p>Thanks, your registration will be processed after your payment has been received. An email has been sent with your receipt.</p>', //TODO: make customisable
 					'Form' => ' '
@@ -758,7 +768,7 @@ class Event_Controller extends Page_Controller {
 				$registration->PaymentID = $payment->ID;
 				$registration->write();
 				$registration->sendReceipt();
-				
+
 				return array(
 					'Content' => '<p>Thanks, your payment has been processed and your reservation has been accepted. An email has been sent with your receipt.</p>', //TODO: make this custom
 					'Form' => ' '
@@ -770,19 +780,19 @@ class Event_Controller extends Page_Controller {
 				'Form' => ' '
 			);
 		}
-		
+
 	}
-	
+
 	/**
 	 *  Landing page for payment gateways
 	 */
 	function paymentcomplete(){
 		$this->ID = -1;
 		$this->Title = "Payment Complete";
-		
+
 		//TODO: swap urlPram ID for session::get ID
 		if(is_numeric(Director::urlParam('ID')) && $registration = DataObject::get_one('EventRegistration','PaymentID = '.Director::urlParam('ID'))){
-			
+
 			//if there's no associated member and session id is wrong, or there is a current member and member id is wrong, fail.
 			if($registration->MemberID){
 				if(Member::currentUser() && ($registration->MemberID != Member::currentUser()->ID)){
@@ -795,7 +805,7 @@ class Event_Controller extends Page_Controller {
 				$this->Content = '<p class="error">Inconsistent session information.</p>';
 				return array();
 			}
-			
+
 			if($payment = DataObject::get_by_id('Payment',Director::urlParam('ID'))){
 				if($payment->Status == 'Success'){
 					$registration->Success = true;
@@ -807,22 +817,22 @@ class Event_Controller extends Page_Controller {
 					$this->Content = $payment->Message;
 					$registration->Status = 'Declined';
 				}
-				
+
 			}else{
 				$this->Title = "Payment Error";
 			}
-			
+
 			$registration->write();
-			
+
 		}else{
 			$this->Title = "Payment Error";
 			$this->Content = '<p class="warning">Could not recognise payment ID.</p>';
 		}
-		
+
 		$this->clearSession();
 		return array();
 	}
-	
+
 	/**
 	 * Redirector to modify page
 	 */
@@ -830,43 +840,43 @@ class Event_Controller extends Page_Controller {
 		Director::redirect($this->ModifyLink());
 		return false;
 	}
-	
+
 	/**
 	 * Helper function to set up initial registration from saved session data.
 	 * Session data is deleted at this point.
-	 * 
+	 *
 	 * $write - choose if regitration should be persisted to DB.
-	 * $writeattendees - chose if attendees should be written to DB. 
+	 * $writeattendees - chose if attendees should be written to DB.
 	 */
 	public function generateRegistration($write = false, $writeattendees = false){
-		
+
 		$dummyform = $this->BookingForm();
 		$regdata = $this->getSessionData(); //get stored session data
-		
+
 		$dummyform->loadDataFrom($regdata);
-		
+
 		$attendees = $this->generateAttendees($dummyform,$writeattendees);
-		
+
 		$registration = new EventRegistration();
-		$dummyform->saveInto($registration);	
+		$dummyform->saveInto($registration);
 		if($write) $registration->write();
-		
+
 		$registration->SessionID = session_id(); //used to check against after payment gateway redirect
 		$registration->EventID = $this->ID;
 		if(Member::currentUser()) $registration->MemberID = Member::currentUser()->ID;
-		
+
 		if($write){
 			$registration->Attendees()->addMany($attendees);
-			$registration->calculateTotalCost();	
+			$registration->calculateTotalCost();
 			$registration->write();
 		}else{
 			$registration->Attendees = $attendees;
-			$registration->calculateTotalCost(false,$attendees);		
+			$registration->calculateTotalCost(false,$attendees);
 		}
 		return $registration;
 	}
-	
-	
+
+
 	/**
 	 * Helper function to create attendees DataObjectSet.
 	 * It will be populated with one entry if the event does not allow multiple bookings.
@@ -874,71 +884,71 @@ class Event_Controller extends Page_Controller {
 	function generateAttendees($form,$write = false){
 		$attendees = new DataObjectSet();
 		if($this->MultipleBooking){
-			$afield = $form->Fields()->fieldByName('Attendees');	
-			$attendees = $afield->getDataObjectSet('EventAttendee',$write);	//custom method on custom class	
+			$afield = $form->Fields()->fieldByName('Attendees');
+			$attendees = $afield->getDataObjectSet('EventAttendee',$write);	//custom method on custom class
 		}else{
 			$attendee = new EventAttendee();
 			$form->saveInto($attendee);
 			if(Member::currentUser())
 				$attendee->MemberID = Member::currentUser()->ID;
-			$attendees->push($attendee);			
+			$attendees->push($attendee);
 		}
 		return $attendees;
 	}
-	
-	
+
+
 	function complete(){
-		
+
 		$content = '<p>Booking complete</p>';
 		$title = 'Booking complete';
-		
+
 		return array(
 			'Title' => $title,
 			'Content' => $content,
 			'Form' => ' '
-		);	
+		);
 	}
 
 }
 
 
 class EventAdminController extends Controller{
-	
+
 	function init(){
-		parent::init();		
+		parent::init();
 	}
-	
+
 	function Title(){
 		return _t('Event'.'ADMINADDTITLE',"Create Registration");
 	}
-	
+
 	function Form(){
-		
+
 		$this->ID = $this->currentPageID();
-		
+
 		//choose members
 		$fields = new FieldSet(
 			new DropdownField('Organisation','Organisation',DataObject::get('Orga'))
 		);
-		
+
 		$actions = new FieldSet(
 			new FormAction('doregistration','Submit')
 		);
-		
+
 		$form = new Form($this,'Form',$fields,$actions);
-		
-		return $form;		
+
+		return $form;
 	}
-	
+
 	public function summarydirect(){
-		
-		Director::redirect(Director::baseURL().'admin');		
+
+		Director::redirect(Director::baseURL().'admin');
 	}
-	
+
 	public function currentPageID() {
-		
+
 		$class = "CMSMain";
-		
+
 		if(isset($_REQUEST['ID']) && is_numeric($_REQUEST['ID']))	{
 			return $_REQUEST['ID'];
 		} elseif (isset($this->urlParams['ID']) && is_numeric($this->urlParams['ID'])) {
@@ -949,18 +959,18 @@ class EventAdminController extends Controller{
 			return null;
 		}
 	}
-	
+
 	public function Link($action = null, $id = null){
 		if($action){
 			$action = "/$action";
 			if($id) $action .= "/$id";
-				
+
 		}else{
 			$action = "";
 		}
 		return $this->class.$action;
 	}
-	
+
 }
 
 ?>

@@ -14,3 +14,8 @@ TODO:
  	This makes switching between multi-bookings and single bookings easier.
  * Internationalisation
  * Do something about Ticket scenarios - I'm not sure these even work?
+ 
+ 
+  * Move to a partial-db based registration system, rather than storing data in the session.
+  This opens up new possibilities, like seeing abandonment rates, helping out with current registrations,
+  and saving registrations for later. 
