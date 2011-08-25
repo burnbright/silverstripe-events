@@ -49,6 +49,14 @@ class Event extends Page {
 
 	static $icon  = 'events/images/date';
 
+	static $summary_fields = array(
+		 	'StartDate',
+		 	'StartTime',
+		 	'Title',
+		 	'EventStatus',
+		 	'Capacity'
+	);
+
 	function getCMSFields() {
 		SiteTree::disableCMSFieldsExtensions();
 		$fields = parent::getCMSFields();
@@ -59,6 +67,7 @@ class Event extends Page {
 		$fields->addFieldToTab('Root.Content.Main', new DropdownField('EventStatus', 'Event status', $this->obj('EventStatus')->enumValues(), '', null, '(Select a status)'), 'Description');
 
 		// Add time/date fields
+		//TODO: upgrade these fields, and move to Main tab
 		$fields->addFieldToTab('Root.Content.Dates', new HeaderField('Event Start'));
 		$fields->addFieldToTab('Root.Content.Dates', new CalendarDateField('StartDate', 'Date'));
 		$fields->addFieldToTab('Root.Content.Dates',	new DropdownTimeField('StartTime', 'Time'));
@@ -195,6 +204,11 @@ class Event extends Page {
 			'getPopupFields',
 			$where
 		);
+
+		//TODO: remove tickets unrelated to this event.
+			//remove checkboxes
+			//don't allow deleting a ticket if it has been used - require deleting / changing registration first.
+
 		$table->setAddTitle('A Ticket');
 		return $table;
 	}

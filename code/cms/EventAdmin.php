@@ -4,19 +4,21 @@ class EventAdmin extends ModelAdmin{
 
 	static $url_segment = 'events';
 	static $menu_title = 'Events';
-
-	public static $collection_controller_class = "EventAdmin_CollectionController";
+	static $menu_priority = 5;
+	static $allowed_actions = array();
 
 	public static $managed_models = array(
-		'EventRegistration',
+		'EventRegistration' => array(
+			'collection_controller' => "EventAdmin_EventRegistration_CollectionController",
+			'record_controller' => "EventAdmin_EventRegistration_RecordController"
+		),
 		'Event',
-		'EventAttendee',
-		'EventTicket'
+		//'EventAttendee',
+		//'EventTicket'
 	);
-
 }
 
-class EventAdmin_CollectionController extends ModelAdmin_CollectionController{
+class EventAdmin_EventRegistration_CollectionController extends ModelAdmin_CollectionController{
 
 	/**
 	 * Adds event selection to 'Create registration' model admin form.
@@ -25,10 +27,9 @@ class EventAdmin_CollectionController extends ModelAdmin_CollectionController{
 	function CreateForm(){
 		$form = parent::CreateForm();
 		if(!$form) return; //there may be no form
-		if($this->modelClass == 'EventRegistration'){
-			if($events = Event::current_events(5))
-				$form->Fields()->push(new DropdownField('EventID','Event',$events->toDropdownMap()));
-		}
+		if($events = Event::current_events(5))
+			$form->Fields()->push(new DropdownField('EventID','Event',$events->toDropdownMap()));
+
 		$this->extend('updateCreateForm',$form,$this->modelClass);
 		return $form;
 	}
@@ -39,9 +40,14 @@ class EventAdmin_CollectionController extends ModelAdmin_CollectionController{
 	function AddForm(){
 		if($form = parent::AddForm()){
 			$form->loadDataFrom($_POST);
-			$this->extend('updateAddForm',$form);
+			$this->extend('updateAddForm',$form,$this->modelClass);
 			return $form;
 		}
 	}
+
+}
+
+class EventAdmin_EventRegistration_RecordController extends ModelAdmin_RecordController{
+
 
 }

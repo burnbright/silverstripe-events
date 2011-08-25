@@ -5,7 +5,6 @@ TODO:
  * Move codebase to GitHub
  
  * Create a task that deletes attendees with no registrationid after x days.
- 
 
  * Security fixes: make sure forms can't be hacked (for ticket selection etc)
  * Make MultipleBookings work with attendees TableListField
@@ -15,7 +14,10 @@ TODO:
  * Internationalisation
  * Do something about Ticket scenarios - I'm not sure these even work?
  
- 
   * Move to a partial-db based registration system, rather than storing data in the session.
   This opens up new possibilities, like seeing abandonment rates, helping out with current registrations,
-  and saving registrations for later. 
+  and saving registrations for later.
+  
+ * Unregister from events
+ * Hold tickets during registration process
+ * Reminder email

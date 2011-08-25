@@ -81,5 +81,8 @@ class EventTicket extends DataObject {
 		return $this->Type." - ".$price;
 	}
 
+	function forTemplate(){
+		return $this->Type;
+	}
 }
 ?>

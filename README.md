@@ -21,4 +21,10 @@ Extract / place the events folder into your silverstripe root directory.
 
 Create events that can be registered and paid for.
 
+## Features
+
+ * Back-end registrations
+ * Payment module integration
+ * Multiple attendees for a single registration
+
 ## Known issues

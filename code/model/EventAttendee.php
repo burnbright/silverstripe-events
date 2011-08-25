@@ -2,50 +2,48 @@
 /**
  * Represents one person attending an event.
  * Each EventRegistration may be registering more than one attendee
- * 
+ *
  * @package events
  */
 class EventAttendee extends DataObject {
-	
+
+	static $singular_name = "attendee";
+	static $plural_name = "attendees";
+
 	public static $db = array(
 		'FirstName' => 'Varchar',
 		'Surname' => 'Varchar',
 		'Email' => 'Varchar',
 		'Cost' => 'Currency'
 	);
-	
+
 	public static $has_one = array(
 		'EventRegistration' => 'EventRegistration',
 		'Ticket' => 'EventTicket',
 		'Member' => 'Member'
 	);
-	
+
 	public static $has_many = array();
-	
 	public static $many_many = array();
-	
 	public static $belongs_many_many = array();
-	
 	public static $many_many_extraFields = array();
-	
 	public static $defaults = array();
-	
 	public static $default_sort = "Surname ASC, FirstName ASC";
-	
-	
+
 	static $searchable_fields = array(
 		"FirstName",
 		"Surname",
 		"Email"
 	 );
-	 
+
 	 static $summary_fields = array(
 	 	'FirstName',
 	 	'Surname',
 	 	'Email',
+	 	'Ticket.Type' => 'Ticket',
+	 	'Ticket.PriceForTemplate' => 'Price'
 	 );
-	
-	
+
 	/**
 	 * Calculate the cost of the ticket for this attendee.
 	 * This is stored separate from the cost in EventTicket so we know
@@ -60,48 +58,54 @@ class EventAttendee extends DataObject {
 	 */
 	function calculateCost($event = null) {
 		if(!$event) $event = $this->EventRegistration()->Event();
-		$cost = $this->Ticket()->Price;	
+		$cost = $this->Ticket()->Price;
 		$cost = $event->updateAttendeeCost($cost,$this);
-		
 		$this->Cost = $cost;
 		return $cost;
 	}
-	
+
 	function getCMSFields() {
-		
+
 		$members = DataObject::get('Member');
-		
 		$fields = new FieldSet(
 			$memberfield = new DropdownField('MemberID','Member',$members->map('ID','Name')),
 			new TextField('FirstName', 'First Name'),
 			new TextField('Surname'),
-			new EmailField('Email'),
-			new DropdownField('TicketID', 'Ticket', $this->EventRegistration()->Event()->Tickets()->map('ID', 'NamePrice'))
+			new EmailField('Email')
 			//new CurrencyField('Cost')
 		);
-		
+
+		$tickets = $this->EventRegistration()->Event()->Tickets();
+		if($tickets->exists()){
+			$fields->push($ticketsfield = new DropdownField('TicketID', 'Ticket', $tickets->map('ID', 'NamePrice')));
+		}else{
+			$fields->push(new LiteralField("NoTicketsMessage", "<p class=\"warning message\">There are no tickets event.</p>"));
+		}
+
 		$memberfield->setHasEmptyDefault(true);
 		$this->extend('updateCMSFields', $fields);
 		return $fields;
 	}
-	
+
+	/**
+	 * Deleting prevented.
+	 */
 	function delete(){
 		return true;
 	}
-	
-	
+
 	public function getEmail(){
 		if($this->MemberID)
 			return $this->Member()->Email;
 		return (string) $this->getField('Email');
 	}
-	
+
 	public function getFirstName(){
 		if($this->MemberID)
 			return $this->Member()->FirstName;
 		return (string) $this->getField('FirstName');
 	}
-	
+
 	public function getSurname(){
 		if($this->MemberID)
 			return $this->Member()->Surname;

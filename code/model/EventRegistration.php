@@ -17,25 +17,24 @@ class EventRegistration extends DataObject {
 		'Email' => 'Varchar',
 		'Notes' => 'Text',
 
-		'SessionID' => 'Varchar'
+		'SessionID' => 'Varchar' //deprecated
 	);
 
 	public static $has_one = array(
 		'Member' => 'Member',
 		'Event' => 'Event',
-		'Payment' => 'Payment' //TODO: allow payment via other means if necessary / multiple payments
+		'Payment' => 'Payment' //deprecated - use multiple payments system
 		//TODO: registered by? ..could be different to Member (registered to)
 	);
 
 	public static $has_many = array(
 		'Attendees' => 'EventAttendee',
-		'StatusHistory' => 'RegistrationStatus'
+		'StatusHistory' => 'RegistrationStatus',
+		'Payments' => 'Payment'
 	);
 
 	public static $many_many = array();
-
 	public static $belongs_many_many = array();
-
 	public static $casting = array();
 
 	public static $defaults = array(
@@ -44,7 +43,6 @@ class EventRegistration extends DataObject {
 	);
 
 	public static $singular_name = 'Registration';
-
 	public static $plural_name = 'Registrations';
 
 	static $searchable_fields = array(
@@ -142,7 +140,7 @@ class EventRegistration extends DataObject {
 			$events = $events->map('ID','MenuTitle');
 			$fields->addFieldToTab('Root.Registration',new DropdownField('EventID','Event',$events),"RegistrantDetialsHeader");
 
-			$fields->addFieldToTab('Root.Registration',new CheckboxField("createattendee","Also create attendee from registrant details. (ie: the registrant is also attending)",true));
+			$fields->addFieldToTab('Root.Registration',new CheckboxField("createattendeefromregistrant","Also create attendee from registrant details. (ie: the registrant is also attending)",true));
 			$fields->addFieldToTab('Root.Registration',
 				new LiteralField('ADMINNEWREGISTRATIONMESSAGE',
 					'<p class="message">'._t("Event.ADMINNEWREGISTRATIONMESSAGE",
@@ -153,8 +151,8 @@ class EventRegistration extends DataObject {
 			$fields->insertBefore(new HeaderField("AddRegistrationHeader","Create New Registration",1), "Root");
 		}else{
 			$statuses = $this->dbObject('Status')->enumValues();
-			$fields->addFieldToTab('Root.Registration', new DropdownField('Status', 'Status', $statuses),'FirstName');
-			$fields->addFieldToTab('Root.Registration', new ReadonlyField('Created', 'Date Created'),'FirstName');
+			$fields->addFieldToTab('Root.Registration', new DropdownField('Status', 'Status', $statuses),'RegistrantDetialsHeader');
+			$fields->addFieldToTab('Root.Registration', new ReadonlyField('Created', 'Date Created'),'RegistrantDetialsHeader');
 
 			$fields->fieldByName('Root')->push(
 				new Tab('Attendees',
@@ -162,40 +160,9 @@ class EventRegistration extends DataObject {
 					$attendeestable = $this->getAttendeesTable()
 				)
 			);
+
+			$fields->addFieldToTab('Root.Payments', $paymentTable = $this->getPaymentTable());
 		}
-
-		//FIXME: payment is has_one.. no need for a table
-		$paymentTable = new TableField(
-			'Payments',
-			'Payment',
-			array(
-				'ID' => 'ID',
-				'PaymentMethod' => 'Payment Method',
-				'Amount' => 'Amount',
-				'Status' => 'Status',
-				'Message' => 'Message',
-				'SentInvoice' => 'Invoice sent?',
-				'SentReceipt' => 'Receipt sent?'
-			),
-			array(
-				'ID' => 'NumericField',
-				'PaymentMethod' => 'TextField',
-				'Amount' => 'CurrencyField',
-				'Status' => 'TextField',
-				'Message' => 'TextField',
-				'SentInvoice' => 'ReadonlyField',
-				'SentReceipt' => 'ReadonlyField'
-			),
-			null,
-			"EventRegistrationID = $this->ID"
-		);
-
-		$paymentTable->setExtraData(array(
-			'EventRegistrationID' => $this->ID
-		));
-		$paymentTable->setPermissions(array("show"));
-
-		//$fields->addFieldToTab('Root.Payments', $paymentTable);
 
 		//TODO: provide mechanism for resending email receipt
 		if($this->PaymentID){
@@ -213,13 +180,15 @@ class EventRegistration extends DataObject {
 			$fields->addFieldToTab('Root.Payment', new DropdownField('PaymentStatus', 'Status',$statuses,$this->Payment()->Status));
 			$fields->addFieldToTab('Root.Payment', new ReadonlyField('PaymentMessage', 'Message',$this->Payment()->Message));
 		}
-
 		$this->extend('updateCMSFields', $fields);
-
 		return $fields;
 	}
 
-	public function getAttendeesTable() {
+	/**
+	 * Creates an attendees table.
+	 * @return ComplexTableField
+	 */
+	function getAttendeesTable() {
 
 		$where = "EventRegistrationID = $this->ID";
 		$sort = 'Surname';
@@ -228,18 +197,50 @@ class EventRegistration extends DataObject {
 		$component = 'EventAttendee';
 
 		$relationshipFields = singleton($component)->summaryFields();
+		if(!$this->Event()->Tickets()->exists()){
+			unset($relationshipFields['Ticket']);
+			unset($relationshipFields['Price']);
+		}
 		$foreignKey = $this->getRemoteJoinField($relationship);
 		$ctf = new ComplexTableField(
 				$this,
 				$relationship,
 				$component,
 				$relationshipFields,
-				"getCMSFields",
-				"\"$foreignKey\" = " . $this->ID
+				$detailFormFields = "getCMSFields",
+				"\"$foreignKey\" = " . $this->ID,
+				$sourceSort = "",
+				$sourceJoin = ""
 			);
 		$ctf->setPermissions(TableListField::permissions_for_object($component));
 
 		return $ctf;
+	}
+
+	/**
+	 * Creates a complex table field payment table.
+	 */
+	protected function getPaymentTable(){
+		$component = 'Payment';
+		$relationship = 'Payments';
+		$relationshipFields = singleton($component)->summaryFields();
+		$foreignKey = "PaidByID";
+		$paymentTable = new ComplexTableField($this,$relationship,$component,
+			$relationshipFields,
+			$detailFormFields = "getCMSFields",
+			$sourceFilter = "\"$foreignKey\" = " . $this->ID,
+			//"\"PaidForClass\" = 'EventRegistration'",
+			"",
+			$sourceSort = "",
+			$sourceJoin = ""
+		);
+		//$paymentTable->setParentIdName("PaidForID");
+		$paymentTable->setParentClass("EventRegistration");
+		/*$paymentTable->setExtraData(array(
+			'EventRegistrationID' => $this->ID
+		));*/
+		//$paymentTable->setPermissions(array("show"));
+		return $paymentTable;
 	}
 
 	/**
@@ -282,9 +283,7 @@ class EventRegistration extends DataObject {
 
  		$to = $this->getEmail(); //TODO: replace with cast of $this->Email ??
  		$from = Email::getAdminEmail(); //TODO: allow custom from address
-
  		$bcc = ($this->EventID && $this->Event()->BCCContact && $this->Event()->EventContactEmail) ? $this->Event()->EventContactEmail :"";
-
  		$e = new $emailClass($from,$to,'Event Registration Receipt: '.$this->Event()->Title,null,null,null,$bcc);
 
  		if(!$template && $this->Event()){
@@ -298,9 +297,7 @@ class EventRegistration extends DataObject {
 		}else{
 			$template = "Event_receiptEmail";
 		}
-
  		$e->setTemplate($template);
-
 		$e->populateTemplate(
 			array(
 				"Registration" => $this,
@@ -310,8 +307,8 @@ class EventRegistration extends DataObject {
 				"Attendees" => $this->Attendees()
 			)
 		);
-
 		$e->send();
+		return $e;
 	}
 
   	/**
@@ -331,9 +328,7 @@ class EventRegistration extends DataObject {
 	 * Set registration cost and number of places.
 	 */
 	function makeBooking() {
-
 		//TODO: allow optionally saving updated member details
-
 		$requestedTickets = array();
 		foreach($this->Attendees() as $attendee) {
 			if(array_key_exists($attendee->TicketID, $requestedTickets)) {
@@ -342,13 +337,11 @@ class EventRegistration extends DataObject {
 				$requestedTickets[$attendee->TicketID] = 1;
 			}
 		}
-
 		if($this->Event()->checkTicketsAvailable($requestedTickets) === true) {
 			$this->Places = $this->Attendees()->Count();
 			$this->calculateTotalCost();
 			return true;
 		}
-
 		return false;
 	}
 
@@ -367,18 +360,15 @@ class EventRegistration extends DataObject {
 	function calculateTotalCost($write = true, $attendees = null) {
 		$cost = 0;
 		$attendees = ($attendees) ? $attendees : $this->Attendees();
-
 		foreach($attendees as $attendee) {
 			$cost += $attendee->calculateCost($this->Event());
 			if($write)$attendee->write();
 		}
-
 		 // Allow this method to be modified by other classes and decorators
 		$this->extend('updateTotalCost', $cost);
 		$this->Event()->extend('updateTotalCost', $cost);
 
 		$this->TotalCost = $cost;
-
 		return $cost;
 	}
 
@@ -387,7 +377,6 @@ class EventRegistration extends DataObject {
 	 */
 	function onBeforeWrite(){
 		parent::onBeforeWrite();
-
 		if($this->PaymentStatus){
 			$payment = $this->Payment();
 			$payment->Status = $this->PaymentStatus;
@@ -395,11 +384,20 @@ class EventRegistration extends DataObject {
 		}
 	}
 
+	function onAfterWrite(){
+		parent::onAfterWrite();
+		//called after creating a new registration in EventAdmin
+		if($this->createattendeefromregistrant){
+			$attendee = $this->newClassInstance("EventAttendee"); //makes a new EventAttendee, based on Registration data
+			$attendee->EventRegistrationID = $this->ID;
+			$attendee->write();
+		}
+	}
+
 	/**
 	 * Delete associated attendees
 	 */
 	function onBeforeDelete(){
-
 		if($attendees = $this->Attendees()){
 			$ids = $attendees->getIdList();
 			if(count($ids) > 0){
@@ -409,6 +407,16 @@ class EventRegistration extends DataObject {
 			}
 		}
 		parent::onBeforeDelete();
+	}
+
+	function getCost(){
+		$cost = 0;
+		if($this->Attendees()->exists() && $attendees = $this->Attendees()){
+			foreach($attendees as $attendee){
+				$cost += $attendee->calculateCost();
+			}
+		}
+		return $cost;
 	}
 
 }
