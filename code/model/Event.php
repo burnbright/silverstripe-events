@@ -76,7 +76,7 @@ class Event extends Page {
 		$fields->addFieldToTab('Root.Content.Dates', new DropdownTimeField('FinishTime', 'Time'));
 
 		// Add tickets table
-		$fields->addFieldToTab('Root.Content.Tickets', $this->getEventTicketsTable());
+		$fields->addFieldToTab('Root.Content.Tickets', $this->getTicketsTable());
 
 		// Add booking options
 		$fields->addFieldToTab('Root.Content', new Tab('Booking Options'));
@@ -119,9 +119,7 @@ class Event extends Page {
 		$fields->addFieldToTab("Root.Content.Emails",new HtmlEditorField('ReceiptContent','Receipt Content'));
 
 		//summary
-
 		///TODO: add summary tab that shows: paid/unpaid , total income, registration numbers - by status and a total, attendee numbers
-
 		$this->extend('updateCMSFields', $fields);
 
 		return $fields;
@@ -189,19 +187,14 @@ class Event extends Page {
 		return $table;
 	}
 
-	public function getEventTicketsTable() {
-		$where = "`EventID` = 0 OR `EventID` = '$this->ID'";
+	public function getTicketsTable() {
+		$where = "`EventID` = '$this->ID'";
 		$table = new HasManyComplexTableField(
 			$this,
 			'Tickets',
 			'EventTicket',
-			array(
-				'Type' => 'Type',
-				'NumberPerMember' => 'Member Limit',
-				'TotalNumber' => 'Overall Limit',
-				'Price' => 'Price'
-			),
-			'getPopupFields',
+			null,
+			null,
 			$where
 		);
 
@@ -413,7 +406,6 @@ HTML;
 		//TODO: join with registration too...otherwise there might be rouge attendees with no reg
 
 		$result = $sqlQuery->execute();
-
 		$ids = array();
 		foreach($result as $ticket){
 			$ids[] = $ticket['TicketID'];
@@ -421,6 +413,11 @@ HTML;
 
 		$filter = (count($ids) > 0) ? " AND ID NOT IN(".implode(',',$ids).")" : "";
 		$tickets = DataObject::get('EventTicket','EventID = '.$this->ID.$filter);
+
+		foreach($tickets as $ticket){
+			if(!$ticket->canPurchase())
+				$tickets->remove($ticket);
+		}
 
 		return $tickets;
 	}
@@ -555,11 +552,9 @@ class Event_Controller extends Page_Controller {
 		parent::init();
 	}
 
-
 	/**
 	 * Session tools.
 	 */
-
 	function clearSession(){
 		Session::clear('EventFormData.'.$this->ID); //clear session data
 		Session::save('EventFormData.'.$this->ID);
@@ -595,19 +590,19 @@ class Event_Controller extends Page_Controller {
 	function register(){
 		return array(
 			'Content' => '', //TODO: Make this customisable
-			"Form" => $this->initForm()
+			"Form" => $this->initForm(true)
 		);
 	}
 
 	/**
 	 * Handle the various scenarios where tickets run out, event has passed, members only etc...
 	 */
-	protected function initForm(){
+	protected function initForm($registeraction = true){
 
 		if(!$this->OnlineBooking) return null;
 
 		$form = ($this->checkCanBook()) ? $this->BookingForm() : "<p class=\"message\">"._t('Event.REGISTERPERMISSONMESSAGE','You do not have permission to register for this event. You may need to log in.')."</p>" ;
-		$form = ($this->FormOnSeparatePage && Director::urlParam('Action') != 'register') ? "<a href=\"".$this->Link('register')."\" class=\"registerlink button\">Register</a>" : $form;
+		$form = ($this->FormOnSeparatePage && !$registeraction) ? "<a href=\"".$this->Link('register')."\" class=\"registerlink button\">Register</a>" : $form;
 
 		if(!$this->HasSparePlaces())
 			$form = "<p class=\"message bad\">The event is now full sorry.</p>";
@@ -625,7 +620,6 @@ class Event_Controller extends Page_Controller {
 		$form = new EventRegistrationForm($this, 'BookingForm');
 		return $form;
 	}
-
 
 	/**
 	 * Do the actual booking

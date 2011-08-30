@@ -21,3 +21,10 @@ TODO:
  * Unregister from events
  * Hold tickets during registration process
  * Reminder email
+ 
+ 
+Printed/mobile ticket module - print, or display ticket on phone.
+ * QR - embed an approve link
+ * Produce pdf version of ticket
+ 
+ Import 'extras' module from newlife

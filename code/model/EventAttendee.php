@@ -7,8 +7,8 @@
  */
 class EventAttendee extends DataObject {
 
-	static $singular_name = "attendee";
-	static $plural_name = "attendees";
+	static $singular_name = "Attendee";
+	static $plural_name = "Attendees";
 
 	public static $db = array(
 		'FirstName' => 'Varchar',
@@ -31,9 +31,11 @@ class EventAttendee extends DataObject {
 	public static $default_sort = "Surname ASC, FirstName ASC";
 
 	static $searchable_fields = array(
+		"EventRegistration.EventID" => array('title'=>'Event'),
+		//TODO: add organisation
 		"FirstName",
 		"Surname",
-		"Email"
+		"Email",
 	 );
 
 	 static $summary_fields = array(
@@ -41,7 +43,8 @@ class EventAttendee extends DataObject {
 	 	'Surname',
 	 	'Email',
 	 	'Ticket.Type' => 'Ticket',
-	 	'Ticket.PriceForTemplate' => 'Price'
+	 	//'EventRegistration.Status' => 'Status', //FIXME: not working!!? argh! :(
+	 	///'Ticket.Price' => 'Price', //FIXME: not working!!
 	 );
 
 	/**
@@ -111,5 +114,6 @@ class EventAttendee extends DataObject {
 			return $this->Member()->Surname;
 		return (string) $this->getField('Surname');
 	}
+
 }
 ?>

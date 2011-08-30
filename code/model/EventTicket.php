@@ -11,12 +11,13 @@ class EventTicket extends DataObject {
 		'Description' => 'Text',
 		'Price' => 'Currency',
 		'TotalNumber' => 'Int',
-		'NumberPerMember' => 'Int'
-		//TODO: only allow for members, or certian groups
+		'NumberPerMember' => 'Int',
+		'TicketFor' => "Enum('everybody,members,nonmembers','everybody')"
 	);
 
 	public static $has_one = array(
-		'Event' => 'Event'
+		'Event' => 'Event',
+		'Group' => 'Group'
 	);
 
 	public static $has_many = array(
@@ -24,26 +25,45 @@ class EventTicket extends DataObject {
 	);
 
 	public static $many_many = array();
-
+	public static $belongs_to = array();
 	public static $belongs_many_many = array();
 
 	public static $casting = array();
 
+	static $summary_fields = array(
+		'Type' => 'Type',
+		'NumberPerMember' => 'Member Limit',
+		'TotalNumber' => 'Overall Limit',
+		'RemainingPlaces' => 'Remaining Places',
+		'Price' => 'Price'
+	);
 
 	/**
 	 * Get fields for CMS popup.
 	 * These fields can be modified in an Extension with a updatePopupFields() method.
 	 * @return FieldSet
 	 */
-	function getPopupFields() {
+	function getCMSFields() {
 		$fields = new FieldSet(
-			new TextField('Type', 'Type'),
-			new TextareaField('Description', 'Description'),
-			new NumericField('Price', 'Price'),
-			new NumericField('TotalNumber', 'Limit Total Number (0 for unlimited)'),
-			new NumericField('NumberPerMember', 'Limit Number per Member (0 for unlimited)')
+			new TabSet('Root',
+				$ticketstab = new Tab('Details',
+					new TextField('Type', 'Name'),
+					new TextareaField('Description', 'Description'),
+					new NumericField('Price', 'Price')
+				),
+				$restrictionstab = new Tab('Restrictions',
+					new NumericField('TotalNumber', 'Limit Total Number (0 for unlimited)'),
+					new NumericField('NumberPerMember', 'Limit Number per Member (0 for unlimited)')
+				)
+			)
 		);
-		$this->extend('updatePopupFields', $fields);
+		$values = $this->dbObject('TicketFor')->enumValues();
+		$i18nvalues = array();
+		foreach($values as $key => $value){
+			$i18nvalues[$value] = _t("EventTicket.".strtoupper($value),$value);
+		}
+		$restrictionstab->push(new OptionsetField("TicketFor",_t("EventTicket.TICKETFOR","Who is this ticket for:"),$i18nvalues));
+		$this->extend('updateCMSFields', $fields);
 		return $fields;
 	}
 
@@ -84,5 +104,20 @@ class EventTicket extends DataObject {
 	function forTemplate(){
 		return $this->Type;
 	}
+
+	function canPurchase($member = null){
+		$member = ($member) ? $member : Member::currentUser();
+		//check if sold out
+		if(!$this->getRemainingPlaces())
+			return false;
+
+		switch($this->TicketFor){
+			case "members":
+				return (bool)$member;
+			case "nonmembers":
+				return !(bool)$member;
+		}
+		return true;
+	}
+
 }
-?>

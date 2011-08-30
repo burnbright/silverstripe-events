@@ -119,7 +119,6 @@ class EventRegistration extends DataObject {
 	}
 
 	public function getCMSFields() {
-
 		$fields = new FieldSet(
 			new HiddenField('ID', 'ID'),
 			new TabSet('Root',
@@ -161,6 +160,7 @@ class EventRegistration extends DataObject {
 				)
 			);
 
+			//TODO: if tickets / cost
 			$fields->addFieldToTab('Root.Payments', $paymentTable = $this->getPaymentTable());
 		}
 
@@ -169,14 +169,13 @@ class EventRegistration extends DataObject {
 			$fields->addFieldToTab('Root.Payment', new ReadonlyField('PaymentID', 'ID',$this->PaymentID));
 			$fields->addFieldToTab('Root.Payment', new ReadonlyField('PaymentMethod', 'Amount',$this->Payment()->Amount));
 
-			//TODO: this array should come from Payment
+			//TODO: this array should come from Payment??
 			$statuses = array(
 				'Incomplete' => 'Incomplete',
 				'Success' => 'Success',
 				'Failure' => 'Failure',
 				'Pending' => 'Pending'
 			);
-
 			$fields->addFieldToTab('Root.Payment', new DropdownField('PaymentStatus', 'Status',$statuses,$this->Payment()->Status));
 			$fields->addFieldToTab('Root.Payment', new ReadonlyField('PaymentMessage', 'Message',$this->Payment()->Message));
 		}
@@ -192,7 +191,6 @@ class EventRegistration extends DataObject {
 
 		$where = "EventRegistrationID = $this->ID";
 		$sort = 'Surname';
-
 		$relationship = 'Attendees';
 		$component = 'EventAttendee';
 
@@ -213,7 +211,6 @@ class EventRegistration extends DataObject {
 				$sourceJoin = ""
 			);
 		$ctf->setPermissions(TableListField::permissions_for_object($component));
-
 		return $ctf;
 	}
 

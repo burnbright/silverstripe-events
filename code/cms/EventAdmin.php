@@ -13,7 +13,7 @@ class EventAdmin extends ModelAdmin{
 			'record_controller' => "EventAdmin_EventRegistration_RecordController"
 		),
 		'Event',
-		//'EventAttendee',
+		'EventAttendee',
 		//'EventTicket'
 	);
 }
