@@ -31,11 +31,16 @@ class EventTicket extends DataObject {
 	public static $casting = array();
 
 	static $summary_fields = array(
-		'Type' => 'Type',
+		'Type' => 'Name',
+		'TicketFor' => 'Applies To',
 		'NumberPerMember' => 'Member Limit',
 		'TotalNumber' => 'Overall Limit',
 		'RemainingPlaces' => 'Remaining Places',
 		'Price' => 'Price'
+	);
+
+	static $field_labels = array(
+		'Type' => 'Name'
 	);
 
 	/**
