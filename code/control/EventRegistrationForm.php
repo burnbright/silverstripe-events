@@ -33,13 +33,13 @@ class EventRegistrationForm extends Form {
 		$validator = self::get_registration_required_fields();
 
 		//Allow decorators to add modify fields
-		if($controller->dataRecord)
-			$controller->data()->extend('updateRegistrationFields', $fields,$actions,$validator);
+
+		$controller->data()->extend('updateRegistrationFields', $fields,$actions,$validator);
 
 		parent::__construct($controller, $name, $fields, $actions, $validator);
 
-		if($controller->dataRecord)
-			$this->controller->data()->extend('updateBookingForm', $this);
+
+		$this->controller->data()->extend('updateBookingForm', $this);
 
 		//Load session data
 		if($formdata = Session::get('EventFormData.'.$this->controller->ID)){

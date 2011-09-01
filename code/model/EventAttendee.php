@@ -30,9 +30,14 @@ class EventAttendee extends DataObject {
 	public static $defaults = array();
 	public static $default_sort = "Surname ASC, FirstName ASC";
 
+	public static $casting = array(
+		'FirstName' => 'Varchar',
+		'Surname' => 'Varchar',
+		'Email' => 'Varchar'
+	);
+
 	static $searchable_fields = array(
 		"EventRegistration.EventID" => array('title'=>'Event'),
-		//TODO: add organisation
 		"FirstName",
 		"Surname",
 		"Email",
