@@ -7,7 +7,7 @@
 class EventRegistration extends DataObject {
 
 	public static $db = array(
-		'Places' => 'Int',
+		'Places' => 'Int', //deprecated
 		'TotalCost' => 'Currency',
 		'Success' => 'Boolean',
 		'HiddenFromEventRegistrationList' => 'Boolean',

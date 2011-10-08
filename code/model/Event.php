@@ -17,7 +17,7 @@ class Event extends Page {
 		'Capacity' => 'Int',
 		'EventContact' => 'Varchar',
 		'EventContactEmail' => 'Varchar',
-		'EventStatus' => "Enum('Available,Cancelled','Available')", // "Status" is already used on SiteTree
+		'EventStatus' => "Enum('Available,Closed,Cancelled','Available')", // "Status" is already used on SiteTree
 
 		'OnlineBooking' => 'Boolean',
 		'BookingPermission' => "Enum('Anyone,LoggedInUsers,Group','LoggedInUsers')",
@@ -57,6 +57,8 @@ class Event extends Page {
 		 	'Capacity'
 	);
 
+	protected static $error_code = null;
+
 	function getCMSFields() {
 		SiteTree::disableCMSFieldsExtensions();
 		$fields = parent::getCMSFields();
@@ -64,7 +66,16 @@ class Event extends Page {
 
 		// Add content fields
 		$fields->addFieldToTab('Root.Content.Main', new TextareaField('Description', 'Short Description'), 'Content');
-		$fields->addFieldToTab('Root.Content.Main', new DropdownField('EventStatus', 'Event status', $this->obj('EventStatus')->enumValues(), '', null, '(Select a status)'), 'Description');
+		$fields->addFieldToTab('Root.Content.Main', new DropdownField('EventStatus', 'Registration status', $this->obj('EventStatus')->enumValues(), '', null, '(Select a status)'), 'Description');
+
+		if(!$this->canRegister(false)){
+			$message = $this->getErrorMessage();
+			$type = $this->getErrorType();
+			$fields->addFieldToTab('Root.Content.Main',new LabelField("RegistrationErrorLabel", "Note: this message will be visible to the average site visitor (not logged in):"),'EventStatus');
+			$fields->addFieldToTab('Root.Content.Main',new LiteralField("RegistrationError",
+				"<p class=\"message $type\">$message</p>")
+			,'EventStatus');
+		}
 
 		// Add time/date fields
 		//TODO: upgrade these fields, and move to Main tab
@@ -121,7 +132,6 @@ class Event extends Page {
 		//summary
 		///TODO: add summary tab that shows: paid/unpaid , total income, registration numbers - by status and a total, attendee numbers
 		$this->extend('updateCMSFields', $fields);
-
 		return $fields;
 	}
 
@@ -129,7 +139,6 @@ class Event extends Page {
 
 		$where = '`EventID` = ' . $this->ID;
 		$sort = 'Created';
-
 		$fieldList = array(
 				'ID' => 'ID',
 				'FirstName' => 'First Name',
@@ -139,13 +148,11 @@ class Event extends Page {
 				'Places' => 'Places',
 				'Status' => 'Reg Status',
 		);
-
 		if($this->Tickets()->Count() > 0){
 			$fieldList['TotalCost'] = 'Cost';
 			$fieldList['Payment.ClassName'] = 'Payment Type'; //TODO: change to use Payment::get_supported_methods() for nice name;
 			$fieldList['Payment.Status'] = 'Payment Status';
 		}
-
 		$table = new ComplexTableField(
 			$this,
 			'EventRegistrationReport',
@@ -183,7 +190,6 @@ class Event extends Page {
 			$join
 		);
 		$table->setPermissions(array('show','edit', 'delete','export'));
-		//$table->setParentClass('EventRegistration');
 		return $table;
 	}
 
@@ -197,11 +203,9 @@ class Event extends Page {
 			null,
 			$where
 		);
-
 		//TODO: remove tickets unrelated to this event.
 			//remove checkboxes
 			//don't allow deleting a ticket if it has been used - require deleting / changing registration first.
-
 		$table->setAddTitle('A Ticket');
 		return $table;
 	}
@@ -216,48 +220,113 @@ class Event extends Page {
 		return DataObject::get("Event","\"StartDate\" >= DATE(NOW()) $interval AND STATUS != 'Cancelled'");
 	}
 
-	/**
-	 * If event contact is a website, provide a link to it, else just provide the event contact name.
-	 */
-	function EventContact() {
-		if(preg_match('/^(http:)/i', $this->EventContact)) {
-			return <<<HTML
-				<a href="$this->EventContact" title="Please visit">$this->EventContact</a>
-HTML;
-		}else{
-			return $this->EventContact;
+	function AllAttendees(){
+		return DataObject::get('EventAttendee','EventRegistration.EventID = ' . $this->ID,'','INNER JOIN EventRegistration ON `EventRegistrationID` = `EventRegistration`.ID');
+	}
+
+	function NumberOfEventRegistrationS() {
+		$where = "EventID = {$this->ID} AND Status = 'Accepted'";
+		if($this->ID > 0) {
+			$rsvps = DataObject::get('EventRegistration', $where);
+			if($rsvps) return $rsvps->Count();
 		}
+		return 0;
 	}
 
-	function removeAllEventRegistration() {
-		$where = "EventID = $this->ID";
-		$regs = DataObject::get("EventRegistration", $where);
-		if($regs) {
-			foreach($regs as $reg) {
-				$reg->delete();
-			}
+	/**
+	* Check if this event can be booked.
+	* Stores error code in static variable if fails.
+	*
+	* Reasons for not being able to register:
+	*	- online booking enabled
+	*	- event was cancelled
+	*	- event has passed
+	*	- member already registered
+	*	- no places left / registrations closed
+	*	- not a member
+	*	- incorrect member group
+	*
+	* @return boolean
+	*/
+	function canRegister($member = null) {
+		if($member === null) $member = Member::currentUser();
+
+		if(!$this->OnlineBooking){
+			self::$error_code = 'noonlinebooking';
+			return false;
 		}
+		if($this->IsCancelled()){
+			self::$error_code = 'cancelled';
+			return false;
+		}
+		if($this->InPast()){
+			self::$error_code = 'inpast';
+			return false;
+		}
+		if($this->EventStatus == "Closed"){
+			self::$error_code = 'closed';
+			return false;
+		}
+		if(!$this->HasSparePlaces()){
+			self::$error_code = 'full';
+			return false;
+		}
+		if(($this->BookingPermission == "LoggedInUsers" || $this->BookingPermission == "Group") && !$member){
+			self::$error_code = 'notmember';
+			return false;
+		}
+		if($this->BookingPermission == "Group" && !$member->inGroup($this->BookingGroup())){
+			self::$error_code = 'notingroup';
+			return false;
+		}
+		return ($this->EventStatus == "Available");
 	}
 
 	/**
-	 * Get an event calendar for this event.
+	 * Return error string, based on current error code.
 	 */
-	function CalendarHTML() {
-		$dataObjectSet = new DataObjectSet();
-		$dataObjectSet->push($this);
-		$month = EventHolder_Controller::getMonthsByEvents($dataObjectSet, $events);
-		$eventCalendar = new EventCalendar($month, $events);
-		return $eventCalendar;
+	function getErrorMessage($code = null){
+		if(!$code) $code = self::$error_code;
+		switch($code){
+			case 'cancelled':
+				return _t('Event.CANCELLED',"This event has been cancelled.");
+			case 'inpast':
+				return _t('Event.INPAST',"This event occurred in the past.");
+			case 'alreadyregistered':
+				return _t('Event.ALREADYREGISTERED',"You are already registered for this event.");
+			case 'noonlinebooking':
+				return _t('Event.NOONLINEBOOKING',"Online bookings are not available for this event.");
+			case 'full':
+				return _t('Event.FULL',"This event is now full.");
+			case 'closed':
+				return _t('Event.CLOSED',"Registration for this event is now closed.");
+			case 'notmember':
+				return _t('Event.NOTMEMBER',"You must be a member to register for this event. Please log in if you are.");
+			case 'notingroup':
+				return _t('Event.NOTINGROUP',"You do not belong to the appropriate group to register for this event."); //TODO: include name of group?
+		}
+		return _t('Event.'.strtoupper($code),"$code");
 	}
 
-
-
 	/**
-	 * Get the last date of this event (the finish date if it exists, otherwise the start date)
-	 * @return Date
+	 * Outputs the type of message that the current error is.
+	 * Either: good, bad, or warning
 	 */
-	function EndDate() {
-		return $this->FinishDate ? $this->obj('FinishDate') : $this->obj('StartDate');
+	function getErrorType($code = null){
+		if(!$code) $code = self::$error_code;
+		switch($code){
+			case 'cancelled':
+			case 'inpast':
+			case 'noonlinebooking':
+			case 'closed':
+				return "warning";
+			case 'alreadyregistered':
+				return "good";
+			case 'notmember':
+			case 'notingroup':
+				return "bad";
+		}
+		return "warning";
 	}
 
 	/**
@@ -272,26 +341,44 @@ HTML;
 	 * Checks if this event has already passed.
 	 * @return boolean
 	 */
-	function IsPast() {
-		return $this->EndDate()->InPast();
+	function InPast() {
+		if($this->FinishDate)
+			return $this->dbObject("FinishDate")->InPast();
+		if($this->StartDate)
+			return $this->dbObject("StartDate")->InPast();
+		//TODO: include time in this calculation
+		return null;
 	}
 
 	/**
-	 * Checks if this event is upcoming (that is, it hasn't started yet).
+	 * Returns true if start of event has not yet passed.
 	 * @return boolean
 	 */
-	function IsUpcoming() {
-		return $this->StartDate()->InFuture();
+	function InFuture() {
+		if($this->StartDate)
+			return $this->dbObject("StartDate")->InFuture();
+		//TODO: include time in this calculation
+		return null;
 	}
 
 	/**
-	 * Checks if this event is currently running.
+	 * Checks if this event is currently running. The function will return true if there is no start and finish dates.
 	 * @return boolean
 	 */
 	function IsRunning() {
-		$isPast = $this->IsPast();
-		$isFuture = $this->IsUpcoming();
-		return !$isPast && !$isFuture;
+		$isPast = $this->InPast();
+		if($isPast === true)
+			return false;
+
+		$isFuture = $this->InFuture();
+		if($isFuture === false)
+			return false;
+
+		return true;
+	}
+
+	function IsAvailable(){
+		return $this->EventStatus == "Available";
 	}
 
 	function HasSparePlaces(){
@@ -308,18 +395,12 @@ HTML;
 		return $this->StartDate() === $this->EndDate();
 	}
 
-	function AllAttendees(){
-		return DataObject::get('EventAttendee','EventRegistration.EventID = ' . $this->ID,'','INNER JOIN EventRegistration ON `EventRegistrationID` = `EventRegistration`.ID');
-	}
-
-	function NumberOfEventRegistrationS() {
-
-		$where = "EventID = {$this->ID} AND Status = 'Accepted'";
-		if($this->ID > 0) {
-			$rsvps = DataObject::get('EventRegistration', $where);
-			if($rsvps) return $rsvps->Count();
-		}
-		return 0;
+	/**
+	* Get the last date of this event (the finish date if it exists, otherwise the start date)
+	* @return Date
+	*/
+	function EndDate() {
+		return $this->FinishDate ? $this->obj('FinishDate') : $this->obj('StartDate');
 	}
 
 	/**
@@ -339,29 +420,17 @@ HTML;
 	}
 
 	/**
-	 * Check if this event can be booked.
-	 * @return boolean
-	 */
-	function checkCanBook() {
-		if(!$this->OnlineBooking) return false;
-		if($this->BookingPermission == "LoggedInUsers" || $this->BookingPermission == "Group"){
-			if(!Member::currentUser())
-				return false;
-		}
-		if($this->BookingPermission == "Group" && !Member::currentUser()->inGroup($this->BookingGroup())) return false;
-		$isPast = $this->IsPast();
-		$isCancelled = $this->IsCancelled();
-
-		return (!$isPast && !$isCancelled);
+	* @deprecated use canRegister
+	*/
+	function checkCanBook(){
+		return $this->canRegister();
 	}
-
 
 	/**
 	 * Check if member is already booked for the event
 	 */
-	function checkAlreadyBooked($member){
+	function checkAlreadyBooked($member = null){
 		//TODO: look up member id / Member::get_unique_identifier_field() in list of attendees for this event
-
 		if(!$member) return false;
 		$allattendees = $this->AllAttendees();
 		if(!$allattendees) return false;
@@ -386,13 +455,11 @@ HTML;
 				return false;
 			}
 		}
-
 		// If we get this far then all tickets are available
 		return true;
 	}
 
 	function AvailableTickets(){
-
 		$sqlQuery = new SQLQuery(
 			 $select = "*, Count(EventTicket.ID) as Count",
 			 $from = array('`EventTicket` INNER JOIN `EventAttendee` ON `EventAttendee`.`TicketID` = `EventTicket`.`ID`'),
@@ -402,7 +469,6 @@ HTML;
 			 $having = "Count >= `EventTicket`.`TotalNumber` AND `EventTicket`.`TotalNumber` > 0",
 			 $limit = ""
 		);
-
 		//TODO: join with registration too...otherwise there might be rouge attendees with no reg
 
 		$result = $sqlQuery->execute();
@@ -412,14 +478,14 @@ HTML;
 		}
 
 		$filter = (count($ids) > 0) ? " AND ID NOT IN(".implode(',',$ids).")" : "";
-		$tickets = DataObject::get('EventTicket','EventID = '.$this->ID.$filter);
-
-		foreach($tickets as $ticket){
-			if(!$ticket->canPurchase())
-				$tickets->remove($ticket);
+		if($tickets = DataObject::get('EventTicket','EventID = '.$this->ID.$filter)){
+			foreach($tickets as $ticket){
+				if(!$ticket->canPurchase())
+					$tickets->remove($ticket);
+			}
+			return $tickets;
 		}
-
-		return $tickets;
+		return null;
 	}
 
 	/**
@@ -428,11 +494,10 @@ HTML;
 	 */
 	public function successfulBookings() {
 		$successfulBookings = new DataObjectSet();
-		$rsvps = $this->EventRegistrations();
-		if($rsvps) {
-			foreach($rsvps as $rsvp){
-				if($rsvp->Success == 'Success'){
-					$successfulBookings->push($rsvp);
+		if($registrations = $this->EventRegistrations()) {
+			foreach($registrations as $registration){
+				if($registration->Success){
+					$successfulBookings->push($registration);
 				}
 			}
 			return $successfulBookings;
@@ -444,7 +509,28 @@ HTML;
 	 * @return int
 	 */
 	public function getPlacesLeft(){
-		return $this->Capacity - $this->getBookedPlaces();
+		if($capacity = $this->getTotalPlaces()){
+			return $capacity - $this->getBookedPlaces();
+		}
+		return null;
+	}
+
+	/**
+	 * The total capacity of the event.
+	 */
+	public function getTotalPlaces(){
+		if($this->Capacity)
+			return $this->Capacity - $bookedplaces;
+
+		$tickets = $this->Tickets();
+		if($tickets->exists()){
+			$capacity = 0;
+			foreach($tickets as $ticket){
+				$capacity += $ticket->TotalNumber;
+			}
+			return $capacity;
+		}
+		return null;
 	}
 
 	/**
@@ -452,24 +538,14 @@ HTML;
 	 * @return int
 	 */
 	public function getBookedPlaces(){
-		$successfulBookings = $this->successfulBookings();
-
-		if($successfulBookings){
+		if($successfulBookings = $this->successfulBookings()){
+			$bookedPlaces = 0;
 			foreach($successfulBookings as $successfulBooking){
-				$bookedPlaces += $successfulBooking->getTotalPlaces();
+				$bookedPlaces += $successfulBooking->getPlaces();
 			}
+			return $bookedPlaces;
 		}
-		return $bookedPlaces;
-	}
-
-	public function getDateQuerystring() {
-		return isset($_GET['calendardate']) ? $_GET['calendardate'] : "";
-	}
-
-	public function sendBookingConfirmedEmail(){
-		$email = new Email(); //TODO: finish this
-		$email->send();
-		//TODO: send attendees notification email? (requires attendees to have email)
+		return null;
 	}
 
 	/**
@@ -499,9 +575,11 @@ HTML;
 		return ($this->FormOnSeparatePage) ? $this->Link('register') : $this->Link();
 	}
 
+	/**
+	 * Prevent finish date being before start date.
+	 */
 	function onBeforeWrite(){
 		parent::onBeforeWrite();
-
 		if(strtotime($this->FinishDate) < strtotime($this->StartDate)){ //empty finish date if it is before start
 			$this->FinishDate = null;
 			$this->FinishTime = null;
@@ -514,6 +592,40 @@ HTML;
 	function updateAttendeeCost($cost, $attendee){
 		$this->extend('updateAttendeeCost',&$cost,&$attendee);
 		return $cost;
+	}
+
+	/**
+	* If event contact is a website, provide a link to it, else just provide the event contact name.
+	*/
+	function EventContact() {
+		if(preg_match('/^(http:)/i', $this->EventContact)) {
+			return <<<HTML
+					<a href="$this->EventContact" title="Please visit">$this->EventContact</a>
+HTML;
+		}else{
+			return $this->EventContact;
+		}
+	}
+
+	function removeAllEventRegistration() {
+		$where = "EventID = $this->ID";
+		$regs = DataObject::get("EventRegistration", $where);
+		if($regs) {
+			foreach($regs as $reg) {
+				$reg->delete();
+			}
+		}
+	}
+
+	/**
+	 * Get an event calendar for this event.
+	 */
+	function CalendarHTML() {
+		$dataObjectSet = new DataObjectSet();
+		$dataObjectSet->push($this);
+		$month = EventHolder_Controller::getMonthsByEvents($dataObjectSet, $events);
+		$eventCalendar = new EventCalendar($month, $events);
+		return $eventCalendar;
 	}
 
 }
@@ -541,14 +653,12 @@ class Event_Controller extends Page_Controller {
 	 */
 	function init() {
 		Requirements::themedCSS('events');
-
 		// If ticket descriptions are enabled, include the necessary javascript
 		if($this->ShowDescriptions) {
 			Requirements::javascript('jsparty/prototype.js');
 			Requirements::javascript('jsparty/behaviour.js');
 			Requirements::javascript('events/javascript/tickettypes.js');
 		}
-
 		parent::init();
 	}
 
@@ -574,7 +684,6 @@ class Event_Controller extends Page_Controller {
 		Director::redirect($this->ModifyLink());
 	}
 
-
 	/**
 	 * Set the form for index.
 	 */
@@ -598,23 +707,15 @@ class Event_Controller extends Page_Controller {
 	 * Handle the various scenarios where tickets run out, event has passed, members only etc...
 	 */
 	protected function initForm($registeraction = true){
-
-		if(!$this->OnlineBooking) return null;
-
-		$form = ($this->checkCanBook()) ? $this->BookingForm() : "<p class=\"message\">"._t('Event.REGISTERPERMISSONMESSAGE','You do not have permission to register for this event. You may need to log in.')."</p>" ;
-		$form = ($this->FormOnSeparatePage && !$registeraction) ? "<a href=\"".$this->Link('register')."\" class=\"registerlink button\">Register</a>" : $form;
-
-		if(!$this->HasSparePlaces())
-			$form = "<p class=\"message bad\">The event is now full sorry.</p>";
-		if($this->checkAlreadyBooked(Member::currentUser()) && !$this->MultipleBooking)
-			$form = "<p class=\"message warning notice\">You are already registered for this event.</p>";
-		if($this->IsPast())
-			$form = "<p class=\"message warning notice\">This event occured in the past.</p>";
-		if($this->IsCancelled())
-			$form = "<p class=\"message bad\">The event has been cancelled.</p>";
-		return $form;
+		if($this->canRegister()){
+			if($this->FormOnSeparatePage && !$registeraction)
+				return "<a href=\"".$this->Link('register')."\" class=\"registerlink button\">Register</a>";
+			return $this->BookingForm();
+		}
+		$type = $this->getErrorType();
+		$message = $this->getErrorMessage();
+		return "<p class=\"message $type\">$message</p>";;
 	}
-
 
 	function BookingForm() {
 		$form = new EventRegistrationForm($this, 'BookingForm');
@@ -645,7 +746,6 @@ class Event_Controller extends Page_Controller {
 		);
 	}
 
-
 	/**
 	 * Action for redirecting away from Form based action.
 	 */
@@ -656,13 +756,9 @@ class Event_Controller extends Page_Controller {
 
 	/**
 	 * Display a summary that includes entered registration details, along with a price, if appropriate.
-	 *
 	 * A payment form will show if needed.
-	 *
 	 * Submitting the form on this page will write everything to the database.
-	 *
 	 */
-
 	function summary() {
 
 		$data = $this->getSessionData();
@@ -722,7 +818,6 @@ class Event_Controller extends Page_Controller {
 		return "EventAttendeesSummary";
 	}
 
-
 	/**
 	 * Do the actual booking with payment.
 	 */
@@ -758,7 +853,6 @@ class Event_Controller extends Page_Controller {
 			$registration->write();
 			return $result->getValue();
 		}
-
 
 		if($result->isSuccess()) {
 			if($payment->Status == 'Pending') {
@@ -884,7 +978,6 @@ class Event_Controller extends Page_Controller {
 		return $registration;
 	}
 
-
 	/**
 	 * Helper function to create attendees DataObjectSet.
 	 * It will be populated with one entry if the event does not allow multiple bookings.
@@ -904,9 +997,7 @@ class Event_Controller extends Page_Controller {
 		return $attendees;
 	}
 
-
 	function complete(){
-
 		$content = '<p>Booking complete</p>';
 		$title = 'Booking complete';
 
@@ -918,67 +1009,3 @@ class Event_Controller extends Page_Controller {
 	}
 
 }
-
-
-class EventAdminController extends Controller{
-
-	function init(){
-		parent::init();
-	}
-
-	function Title(){
-		return _t('Event'.'ADMINADDTITLE',"Create Registration");
-	}
-
-	function Form(){
-
-		$this->ID = $this->currentPageID();
-
-		//choose members
-		$fields = new FieldSet(
-			new DropdownField('Organisation','Organisation',DataObject::get('Orga'))
-		);
-
-		$actions = new FieldSet(
-			new FormAction('doregistration','Submit')
-		);
-
-		$form = new Form($this,'Form',$fields,$actions);
-
-		return $form;
-	}
-
-	public function summarydirect(){
-
-		Director::redirect(Director::baseURL().'admin');
-	}
-
-	public function currentPageID() {
-
-		$class = "CMSMain";
-
-		if(isset($_REQUEST['ID']) && is_numeric($_REQUEST['ID']))	{
-			return $_REQUEST['ID'];
-		} elseif (isset($this->urlParams['ID']) && is_numeric($this->urlParams['ID'])) {
-			return $this->urlParams['ID'];
-		} elseif(Session::get("{$class}.currentPage")) {
-			return Session::get("{$class}.currentPage");
-		} else {
-			return null;
-		}
-	}
-
-	public function Link($action = null, $id = null){
-		if($action){
-			$action = "/$action";
-			if($id) $action .= "/$id";
-
-		}else{
-			$action = "";
-		}
-		return $this->class.$action;
-	}
-
-}
-
-?>

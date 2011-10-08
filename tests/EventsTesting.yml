@@ -1,0 +1,47 @@
+Event:
+	upcomingconcert: # an event that should be available/open for registration/sign-up/purchase
+		Title: Music Concert
+		StartDate: 2032-10-03
+		StartTime: 03:39:17
+		FinishDate: 2032-10-03
+		FinishTime: 04:50:22
+		Capacity: 5
+		EventContact: john doe
+		EventContactEmail: event@example.local
+		EventStatus: Available
+		OnlineBooking: true
+		BookingPermission: Anyone
+		MultipleBooking: false
+		ShowDescriptions: true
+		FormOnSeparatePage: false
+
+EventTicket:
+	adult:
+		Type: Adult
+		Description: Allows adults (over 18) to enter the concert.
+		Price: 120.00
+		TotalNumber: 5
+		NumberPerMember: 1
+		TicketFor: everybody
+		Event: =>Event.upcomingconcert
+
+EventRegistration:
+	registration1:
+		TotalCost: 120.00
+		Success: true
+		HiddenFromEventRegistrationList: false
+		Status: Accepted
+		FirstName: Joe
+		Surname: Bloggs
+		Email: joe@bloggs.local
+		Notes:
+		Event: =>Event.upcomingconcert
+
+EventAttendee:
+	joebloggs:
+		FirstName: joe
+		Surname: bloggs
+		Email: joe@bloggs.local
+		Cost: 120.00
+		EventRegistration: =>EventRegistration.registration1
+		Ticket: EventTicket.adult
