@@ -7,13 +7,15 @@ Event:
 		FinishTime: 04:50:22
 		Capacity: 5
 		EventContact: john doe
-		EventContactEmail: event@example.local
+		EventContactEmail: event@example.test
 		EventStatus: Available
 		OnlineBooking: true
 		BookingPermission: Anyone
 		MultipleBooking: false
 		ShowDescriptions: true
 		FormOnSeparatePage: false
+		ReceiptContent: <p>Thanks for registering.</p>
+		BCCContact: event@example.test
 
 EventTicket:
 	adult:
@@ -33,7 +35,7 @@ EventRegistration:
 		Status: Accepted
 		FirstName: Joe
 		Surname: Bloggs
-		Email: joe@bloggs.local
+		Email: joe.bloggs@example.test
 		Notes:
 		Event: =>Event.upcomingconcert
 
@@ -41,7 +43,7 @@ EventAttendee:
 	joebloggs:
 		FirstName: joe
 		Surname: bloggs
-		Email: joe@bloggs.local
+		Email: joe.bloggs@example.test
 		Cost: 120.00
 		EventRegistration: =>EventRegistration.registration1
 		Ticket: EventTicket.adult

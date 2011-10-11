@@ -100,7 +100,7 @@ class Event extends Page {
 		$fields->addFieldToTab('Root.Content.BookingOptions', new NumericField('Capacity', 'Registration Limit', '', 3));
 		$fields->addFieldToTab('Root.Content.BookingOptions', new LiteralField('CapacityHelp', '<p>Leave capacity blank for no limit. Also note that the use of ticket limits override this capacity field.</p>'));
 
-		$fields->addFieldToTab('Root.Content.BookingOptions', new HeaderField('Who Can Book For This Event?'));
+		$fields->addFieldToTab('Root.Content.BookingOptions', new HeaderField('WhoCanBookHeader','Who Can Book For This Event?'));
 		$fields->addFieldToTab('Root.Content.BookingOptions', new OptionsetField(
 			'BookingPermission',
 			'',
@@ -170,7 +170,8 @@ class Event extends Page {
 
 		$where = 'EventRegistration.EventID = ' . $this->ID;
 		$sort = 'Surname ASC, FirstName ASC';
-		$join = 'INNER JOIN EventRegistration ON `EventRegistrationID` = `EventRegistration`.ID INNER JOIN EventTicket ON EventAttendee.TicketID = EventTicket.ID';
+		$join = "INNER JOIN \"EventRegistration\" ON \"EventRegistrationID\" = \"EventRegistration\".\"ID\" ".
+				"LEFT JOIN EventTicket ON \"EventAttendee\".\"TicketID\" = \"EventTicket\".\"ID\"";
 
 		$table = new ComplexTableField(
 			$this,
@@ -195,7 +196,7 @@ class Event extends Page {
 
 	public function getTicketsTable() {
 		$where = "`EventID` = '$this->ID'";
-		$table = new HasManyComplexTableField(
+		$table = new ComplexTableField(
 			$this,
 			'Tickets',
 			'EventTicket',
@@ -220,19 +221,6 @@ class Event extends Page {
 		return DataObject::get("Event","\"StartDate\" >= DATE(NOW()) $interval AND STATUS != 'Cancelled'");
 	}
 
-	function AllAttendees(){
-		return DataObject::get('EventAttendee','EventRegistration.EventID = ' . $this->ID,'','INNER JOIN EventRegistration ON `EventRegistrationID` = `EventRegistration`.ID');
-	}
-
-	function NumberOfEventRegistrationS() {
-		$where = "EventID = {$this->ID} AND Status = 'Accepted'";
-		if($this->ID > 0) {
-			$rsvps = DataObject::get('EventRegistration', $where);
-			if($rsvps) return $rsvps->Count();
-		}
-		return 0;
-	}
-
 	/**
 	* Check if this event can be booked.
 	* Stores error code in static variable if fails.
@@ -249,7 +237,7 @@ class Event extends Page {
 	* @return boolean
 	*/
 	function canRegister($member = null) {
-		if($member === null) $member = Member::currentUser();
+		if(is_null($member)) $member = Member::currentUser();
 
 		if(!$this->OnlineBooking){
 			self::$error_code = 'noonlinebooking';
@@ -261,6 +249,10 @@ class Event extends Page {
 		}
 		if($this->InPast()){
 			self::$error_code = 'inpast';
+			return false;
+		}
+		if(!$this->MultipleBooking && $this->checkAlreadyBooked($member)){
+			self::$error_code = 'alreadyregistered';
 			return false;
 		}
 		if($this->EventStatus == "Closed"){
@@ -384,7 +376,7 @@ class Event extends Page {
 	function HasSparePlaces(){
 		if($this->Tickets()->Count() > 0 && (!$this->AvailableTickets() || $this->AvailableTickets()->Count() <= 0))
 			return false;
-		return (!$this->Capacity || !$this->AllAttendees() || ($this->AllAttendees()->Count() < $this->Capacity));
+		return (!$this->Capacity || !$this->getAllAttendees() || ($this->getAllAttendees()->Count() < $this->Capacity));
 	}
 
 	/**
@@ -430,9 +422,9 @@ class Event extends Page {
 	 * Check if member is already booked for the event
 	 */
 	function checkAlreadyBooked($member = null){
-		//TODO: look up member id / Member::get_unique_identifier_field() in list of attendees for this event
+		if(is_null($member)) $member = Member::currentUser();
 		if(!$member) return false;
-		$allattendees = $this->AllAttendees();
+		$allattendees = $this->getAllAttendees();
 		if(!$allattendees) return false;
 		return (bool)($allattendees->find('MemberID',$member->ID));
 	}
@@ -445,7 +437,6 @@ class Event extends Page {
 	function checkTicketsAvailable($requestedTickets) {
 		foreach($requestedTickets as $ticketType => $numRequested) {
 			$ticket = DataObject::get_by_id('EventTicket', $ticketType);
-
 			// Check there are enough free tickets
 			if($ticket->TotalNumber && ($ticket->Attendees()->Count() + $numRequested) > $ticket->TotalNumber) {
 				return false;
@@ -489,19 +480,10 @@ class Event extends Page {
 	}
 
 	/**
-	 * Get successful EventRegistrations.
-	 * @return DataObjectSet
-	 */
-	public function successfulBookings() {
-		$successfulBookings = new DataObjectSet();
-		if($registrations = $this->EventRegistrations()) {
-			foreach($registrations as $registration){
-				if($registration->Success){
-					$successfulBookings->push($registration);
-				}
-			}
-			return $successfulBookings;
-		}
+	* Get all successful registrations
+	*/
+	public function getSuccessfulRegistrations(){
+		return DataObject::get('EventRegistration',"\"EventRegistration\".\"EventID\" = " . $this->ID . " AND \"Status\" = 'Accepted'");
 	}
 
 	/**
@@ -516,12 +498,19 @@ class Event extends Page {
 	}
 
 	/**
+	* Get the number of booked places.
+	* @return int
+	*/
+	public function getBookedPlaces(){
+		return $this->getAllAttendees()->Count();
+	}
+
+	/**
 	 * The total capacity of the event.
 	 */
 	public function getTotalPlaces(){
 		if($this->Capacity)
-			return $this->Capacity - $bookedplaces;
-
+			return $this->Capacity;
 		$tickets = $this->Tickets();
 		if($tickets->exists()){
 			$capacity = 0;
@@ -534,38 +523,17 @@ class Event extends Page {
 	}
 
 	/**
-	 * Get the number of booked places.
-	 * @return int
-	 */
-	public function getBookedPlaces(){
-		if($successfulBookings = $this->successfulBookings()){
-			$bookedPlaces = 0;
-			foreach($successfulBookings as $successfulBooking){
-				$bookedPlaces += $successfulBooking->getPlaces();
-			}
-			return $bookedPlaces;
-		}
-		return null;
-	}
-
-	/**
-	 * Get all attendees with 'Accepted' registrations
-	 */
+	* Get all attendees with 'Accepted' registrations
+	*/
 	public function getAllAttendees($fil = null,$sort = null){
 		$filter = ($fil) ? ' AND '.$fil: '';
-		$where = 'EventRegistration.EventID = ' . $this->ID . ' AND Status = "Accepted"'.$filter;
-		$sort = ($sort) ? $sort :'Surname ASC, FirstName ASC';
-		$join = 'INNER JOIN EventRegistration ON `EventRegistrationID` = `EventRegistration`.ID INNER JOIN EventTicket ON EventAttendee.TicketID = EventTicket.ID';
+		$where = "\"EventRegistration\".\"EventID\" = " . $this->ID .
+				 " AND \"EventRegistration\".\"Status\" = 'Accepted'".$filter;
+		$sort = ($sort) ? $sort : 'Surname ASC, FirstName ASC';
+		$join = "RIGHT JOIN \"EventRegistration\" ON \"EventRegistrationID\" = \"EventRegistration\".\"ID\"".
+				" LEFT JOIN \"EventTicket\" ON \"EventAttendee\".\"TicketID\" = \"EventTicket\".\"ID\"";
 		$attendees =  DataObject::get('EventAttendee',$where,$sort,$join);
 		return $attendees;
-	}
-
-	/**
-	 * Get all successful registrations
-	 */
-	public function getSuccessfulRegistrations(){
-		$registrations = DataObject::get('EventRegistration','EventRegistration.EventID = ' . $this->ID . ' AND Status = "Accepted"');
-		return $registrations;
 	}
 
 	/**
@@ -706,7 +674,7 @@ class Event_Controller extends Page_Controller {
 	/**
 	 * Handle the various scenarios where tickets run out, event has passed, members only etc...
 	 */
-	protected function initForm($registeraction = true){
+	protected function initForm($registeraction = false){
 		if($this->canRegister()){
 			if($this->FormOnSeparatePage && !$registeraction)
 				return "<a href=\"".$this->Link('register')."\" class=\"registerlink button\">Register</a>";
@@ -727,11 +695,10 @@ class Event_Controller extends Page_Controller {
 	 */
 	function book(){
 
-		if(!$this->getSessionData()){ //don't allow viewing page if session data isn't available
+		if(!$this->getSessionData() || !$this->canRegister()){ //don't allow viewing page if session data isn't available
 			Director::redirect($this->ModifyLink());
 			return;
 		}
-		//TODO: final ticket availability check
 
 		//create real registration object
 		$registration = $this->generateRegistration(true,true);
@@ -842,9 +809,7 @@ class Event_Controller extends Page_Controller {
 		$payment->write();
 
 		$this->data()->extend('onBeforePayment', &$registration, &$payment, &$data, &$form);
-
 		$result = $payment->processPayment($data, $form);
-
 		$this->clearSession();
 
 		if($result->isProcessing()) {
@@ -954,9 +919,7 @@ class Event_Controller extends Page_Controller {
 
 		$dummyform = $this->BookingForm();
 		$regdata = $this->getSessionData(); //get stored session data
-
 		$dummyform->loadDataFrom($regdata);
-
 		$attendees = $this->generateAttendees($dummyform,$writeattendees);
 
 		$registration = new EventRegistration();

@@ -24,11 +24,9 @@ class EventTicket extends DataObject {
 		'Attendees' => 'EventAttendee'
 	);
 
-	public static $many_many = array();
-	public static $belongs_to = array();
-	public static $belongs_many_many = array();
-
-	public static $casting = array();
+	public static $defaults = array(
+		'TicketFor' => 'everybody'
+	);
 
 	static $summary_fields = array(
 		'Type' => 'Name',
@@ -52,7 +50,7 @@ class EventTicket extends DataObject {
 		$fields = new FieldSet(
 			new TabSet('Root',
 				$ticketstab = new Tab('Details',
-					new TextField('Type', 'Name'),
+					$type = new TextField('Type', 'Name','test'),
 					new TextareaField('Description', 'Description'),
 					new NumericField('Price', 'Price')
 				),
@@ -70,6 +68,10 @@ class EventTicket extends DataObject {
 		$restrictionstab->push(new OptionsetField("TicketFor",_t("EventTicket.TICKETFOR","Who is this ticket for:"),$i18nvalues));
 		$this->extend('updateCMSFields', $fields);
 		return $fields;
+	}
+
+	function populateDefaults(){
+		//$this->Type = $this->Event()->Title; //TODO: figure out how to do this, and have it work
 	}
 
 	/**

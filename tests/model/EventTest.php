@@ -27,16 +27,13 @@ class EventTest extends SapphireTest{
 
 		//$this->assertFalse($event->IsOneDayEvent());
 
-
-
-		//Appropriate order for 'cant register' messages:
+		//TODO: test cannot register cases
 			//event was cancelled
 			//event has passed
 			//member already registered
 			//no places left / registrations closed
 			//not a member
 			//incorrect member group
-
 	}
 
 	//Functional Tests
@@ -47,11 +44,11 @@ class EventTest extends SapphireTest{
 
 	//TODO: add existing member, and registrations/attendees
 
-
 	//write tests for
 
 	//registration
-	//email
+		//multi-member
+	//emails
 	//payment
 
 }
