@@ -97,8 +97,7 @@ class Event extends Page {
 		$fields->addFieldToTab('Root.Content.BookingOptions', new CheckboxField('ShowDescriptions', 'Show ticket descriptions'));
 		$fields->addFieldToTab('Root.Content.BookingOptions', new CheckboxField('FormOnSeparatePage', 'Show form on a separate page'));
 
-		$fields->addFieldToTab('Root.Content.BookingOptions', new NumericField('Capacity', 'Registration Limit', '', 3));
-		$fields->addFieldToTab('Root.Content.BookingOptions', new LiteralField('CapacityHelp', '<p>Leave capacity blank for no limit. Also note that the use of ticket limits override this capacity field.</p>'));
+		$fields->addFieldToTab('Root.Content.BookingOptions', new NumericField('Capacity', 'Registration Limit (0 for unlimited)', '', 3));
 
 		$fields->addFieldToTab('Root.Content.BookingOptions', new HeaderField('WhoCanBookHeader','Who Can Book For This Event?'));
 		$fields->addFieldToTab('Root.Content.BookingOptions', new OptionsetField(

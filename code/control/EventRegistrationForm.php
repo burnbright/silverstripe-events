@@ -83,6 +83,7 @@ class EventRegistrationForm extends Form {
 		if($member && $member->Email) $regfields->push(new ReadonlyField('Email', 'Email', $member->Email));
 		else $regfields->push(new EmailField('Email', 'Email'));
 
+
 		if($member)	$regfields->push(new HiddenField('MemberID',$member->ID));
 
 		$regfields->push(new LiteralField('EndFiller',""));
