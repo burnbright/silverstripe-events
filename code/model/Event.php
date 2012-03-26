@@ -80,12 +80,18 @@ class Event extends Page {
 		// Add time/date fields
 		//TODO: upgrade these fields, and move to Main tab
 		$fields->addFieldToTab('Root.Content.Dates', new HeaderField('Event Start'));
-		$fields->addFieldToTab('Root.Content.Dates', new CalendarDateField('StartDate', 'Date'));
-		$fields->addFieldToTab('Root.Content.Dates',	new DropdownTimeField('StartTime', 'Time'));
+		$fields->addFieldToTab('Root.Content.Dates', $startdate = new DateField('StartDate', 'Date'));
+		$fields->addFieldToTab('Root.Content.Dates', $starttime = new TimeField('StartTime', 'Time'));
 		$fields->addFieldToTab('Root.Content.Dates', new HeaderField('Event End'));
-		$fields->addFieldToTab('Root.Content.Dates', new CalendarDateField('FinishDate', 'Date'));
-		$fields->addFieldToTab('Root.Content.Dates', new DropdownTimeField('FinishTime', 'Time'));
+		$fields->addFieldToTab('Root.Content.Dates', $finishdate = new DateField('FinishDate', 'Date'));
+		$fields->addFieldToTab('Root.Content.Dates', $finishtime = new TimeField('FinishTime', 'Time'));
 
+		$startdate->setConfig('showcalendar',true);
+		$finishdate->setConfig('showcalendar',true);
+		
+		$starttime->setConfig('showdropdown',true);
+		$finishtime->setConfig('showdropdwon',true);
+		
 		// Add tickets table
 		$fields->addFieldToTab('Root.Content.Tickets', $this->getTicketsTable());
 
