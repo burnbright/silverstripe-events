@@ -167,7 +167,7 @@ class EventRegistration extends DataObject {
 		//TODO: provide mechanism for resending email receipt
 		if($this->PaymentID){
 			$fields->addFieldToTab('Root.Payment', new ReadonlyField('PaymentID', 'ID',$this->PaymentID));
-			$fields->addFieldToTab('Root.Payment', new ReadonlyField('PaymentMethod', 'Amount',$this->Payment()->Amount));
+			$fields->addFieldToTab('Root.Payment', new ReadonlyField('PaymentMethod', 'Amount',$this->Payment()->Amount->Amount));
 
 			//TODO: this array should come from Payment??
 			$statuses = array(

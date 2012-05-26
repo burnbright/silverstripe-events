@@ -223,7 +223,7 @@ class Event extends Page {
 	 */
 	static function current_events($interval = null){
 		$interval = ($interval) ? " - INTERVAL $interval DAY" : "";
-		return DataObject::get("Event","\"StartDate\" >= DATE(NOW()) $interval AND STATUS != 'Cancelled'");
+		return DataObject::get("Event","\"StartDate\" >= DATE(NOW()) $interval AND \"Event\".\"EventStatus\" NOT IN('Cancelled','Closed')");
 	}
 
 	/**
@@ -699,12 +699,10 @@ class Event_Controller extends Page_Controller {
 	 * Do the actual booking
 	 */
 	function book(){
-
 		if(!$this->getSessionData() || !$this->canRegister()){ //don't allow viewing page if session data isn't available
 			Director::redirect($this->ModifyLink());
 			return;
 		}
-
 		//create real registration object
 		$registration = $this->generateRegistration(true,true);
 		$registration->sendReceipt();
@@ -732,36 +730,28 @@ class Event_Controller extends Page_Controller {
 	 * Submitting the form on this page will write everything to the database.
 	 */
 	function summary() {
-
 		$data = $this->getSessionData();
 		$form = $this->BookingForm();
 		$form->loadDataFrom($data);
-
 		//create temp registration for calculating costs etc
 		$registration = $this->generateRegistration(); //false = don't write to DB
 		$totalcost = $registration->TotalCost;
-
 		if($this->Tickets() && $this->Tickets()->exists()){
 			//TODO: make sure a ticket id has been selected, & make sure selected ticket belongs to this event
 		}
-
 		if($totalcost > 0) {
 			//redirect to payment page
 			Session::set('EventFormData.'.$this->ID.'.totalcost',$totalcost);
 			Director::redirect($this->Link('payment'));
 			return false;
 		}
-
 		$summaryform = unserialize(serialize($form));
 		$summaryform->makeReadonly();
-
 		$summaryform->setActions(new FieldSet(
 			$modifyaction = new FormAction('modify','Modify'),
 			$bookaction = new FormAction('book','Book')
 		));
-
 		$registration->extend('updateBookingSummaryForm',$summaryform);
-
 		return array(
 			'Title' => 'Summary',
 			'Form' => $summaryform,
@@ -794,43 +784,35 @@ class Event_Controller extends Page_Controller {
 	 * Do the actual booking with payment.
 	 */
 	function processpayment($data, $form) {
-
 		if(!$this->getSessionData()){
 			Director::redirect($this->ModifyLink());
 			return false;
 		}
-
 		$registration = $this->generateRegistration(true,true);
-
 		//create payment
 		$payment = Object::create($data['PaymentMethod']);
 		if(!($payment instanceof Payment)) {
 			user_error(get_class($payment) . ' is not a Payment object!', E_USER_ERROR);
 		}
 		$form->saveInto($payment);
-
 		$payment->EventRegistrationID = $registration->ID;
-		$payment->Amount = $registration->TotalCost;
+		$payment->Amount->Amount = $registration->TotalCost;
 		$payment->write();
-
-		$this->data()->extend('onBeforePayment', &$registration, &$payment, &$data, &$form);
+		$this->data()->extend('onBeforePayment', $registration, $payment, $data, $form);
 		$result = $payment->processPayment($data, $form);
 		$this->clearSession();
-
 		if($result->isProcessing()) {
 			$registration->Status = 'Pending';
 			$registration->PaymentID = $payment->ID;
 			$registration->write();
 			return $result->getValue();
 		}
-
 		if($result->isSuccess()) {
 			if($payment->Status == 'Pending') {
 				$registration->Status = 'Pending';
 				$registration->PaymentID = $payment->ID;
 				$registration->write();
 				$registration->sendReceipt();
-
 				return array(
 					'Content' => '<p>Thanks, your registration will be processed after your payment has been received. An email has been sent with your receipt.</p>', //TODO: make customisable
 					'Form' => ' '
@@ -840,7 +822,6 @@ class Event_Controller extends Page_Controller {
 				$registration->PaymentID = $payment->ID;
 				$registration->write();
 				$registration->sendReceipt();
-
 				return array(
 					'Content' => '<p>Thanks, your payment has been processed and your reservation has been accepted. An email has been sent with your receipt.</p>', //TODO: make this custom
 					'Form' => ' '
@@ -861,10 +842,8 @@ class Event_Controller extends Page_Controller {
 	function paymentcomplete(){
 		$this->ID = -1;
 		$this->Title = "Payment Complete";
-
 		//TODO: swap urlPram ID for session::get ID
 		if(is_numeric(Director::urlParam('ID')) && $registration = DataObject::get_one('EventRegistration','PaymentID = '.Director::urlParam('ID'))){
-
 			//if there's no associated member and session id is wrong, or there is a current member and member id is wrong, fail.
 			if($registration->MemberID){
 				if(Member::currentUser() && ($registration->MemberID != Member::currentUser()->ID)){
@@ -889,18 +868,15 @@ class Event_Controller extends Page_Controller {
 					$this->Content = $payment->Message;
 					$registration->Status = 'Declined';
 				}
-
 			}else{
 				$this->Title = "Payment Error";
 			}
-
 			$registration->write();
 
 		}else{
 			$this->Title = "Payment Error";
 			$this->Content = '<p class="warning">Could not recognise payment ID.</p>';
 		}
-
 		$this->clearSession();
 		return array();
 	}
@@ -921,20 +897,20 @@ class Event_Controller extends Page_Controller {
 	 * $writeattendees - chose if attendees should be written to DB.
 	 */
 	public function generateRegistration($write = false, $writeattendees = false){
-
 		$dummyform = $this->BookingForm();
 		$regdata = $this->getSessionData(); //get stored session data
 		$dummyform->loadDataFrom($regdata);
 		$attendees = $this->generateAttendees($dummyform,$writeattendees);
-
 		$registration = new EventRegistration();
 		$dummyform->saveInto($registration);
-		if($write) $registration->write();
-
+		if($write){
+			$registration->write();
+		}
 		$registration->SessionID = session_id(); //used to check against after payment gateway redirect
 		$registration->EventID = $this->ID;
-		if(Member::currentUser()) $registration->MemberID = Member::currentUser()->ID;
-
+		if(Member::currentUser()){
+			$registration->MemberID = Member::currentUser()->ID;
+		}
 		if($write){
 			$registration->Attendees()->addMany($attendees);
 			$registration->calculateTotalCost();
@@ -968,7 +944,6 @@ class Event_Controller extends Page_Controller {
 	function complete(){
 		$content = '<p>Booking complete</p>';
 		$title = 'Booking complete';
-
 		return array(
 			'Title' => $title,
 			'Content' => $content,

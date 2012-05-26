@@ -2,16 +2,16 @@
     
 ## Maintainer Contact   
 
- * Jeremy Shipman (Nickname: jedateach, jeremy [at] burnbright.co.nz)
+ * Jeremy Shipman (Nickname: jedateach, jeremy [at] burnbright.net)
 
 ## Requirements
 
- * SilverStripe 2.3
- * SilverStripe 2.4 + legacydatetimefields module (https://github.com/silverstripe-labs/silverstripe-legacydatetimefields)
-
+ * SilverStripe 2.4
+ * Payment module
+ 
 ## Documentation
 
-
+see the docs and docs_user folders.
 
 ## Installation Instructions
 
@@ -26,5 +26,3 @@ Create events that can be registered and paid for.
  * Back-end registrations
  * Payment module integration
  * Multiple attendees for a single registration
-
-## Known issues
