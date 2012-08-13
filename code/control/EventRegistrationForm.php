@@ -37,7 +37,6 @@ class EventRegistrationForm extends Form {
 		}
 	}
 
-
 	/**
 	 * Get the fields for the registration form.
 	 */

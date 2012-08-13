@@ -628,9 +628,12 @@ class Event_Controller extends Page_Controller {
 		Requirements::themedCSS('events');
 		// If ticket descriptions are enabled, include the necessary javascript
 		if($this->ShowDescriptions) {
-			Requirements::javascript('jsparty/prototype.js');
-			Requirements::javascript('jsparty/behaviour.js');
+			Requirements::javascript(THIRDPARTY_DIR.'/prototype/prototype.js');
+			Requirements::javascript(THIRDPARTY_DIR.'/behaviour/behaviour.js');
+			Requirements::javascript('sapphire/javascript/prototype_improvements.js');
 			Requirements::javascript('events/javascript/tickettypes.js');
+			Requirements::javascript(THIRDPARTY_DIR.'/jquery/jquery.js');
+			Requirements::javascript('sapphire/javascript/jquery_improvements.js'); //contains jquery.noconflict
 		}
 		parent::init();
 	}
