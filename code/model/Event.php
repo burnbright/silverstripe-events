@@ -563,7 +563,7 @@ class Event extends Page {
 	 * Stub for extending in sub classes
 	 */
 	function updateAttendeeCost($cost, $attendee){
-		$this->extend('updateAttendeeCost',&$cost,&$attendee);
+		$this->extend('updateAttendeeCost', $cost, $attendee);
 		return $cost;
 	}
 
