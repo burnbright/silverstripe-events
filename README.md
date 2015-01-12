@@ -1,5 +1,7 @@
 # Events Module
-    
+
+**This module is no longer maintained** There are now better solutions available for SilverStripe 3+.
+
 ## Maintainer Contact   
 
  * Jeremy Shipman (Nickname: jedateach, jeremy [at] burnbright.net)
