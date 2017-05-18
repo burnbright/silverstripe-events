@@ -8,9 +8,9 @@ class CustomTableField extends TableField{
 		
 		function getDataObjectSet($class = 'DataObject',$write = false){
 				$dos = new DataObjectSet();
-				$dataObjects = $this->sortData($this->value, null);
-				if(isset($dataObjects['new']) && $dataObjects['new']) {
-						$newFields = $this->sortData($dataObjects['new'], null);
+				$data = $this->value;
+				if(isset($data['new']) && $data['new']) {
+						$newFields = $this->sortData($data['new'], null);
 						$dos = $this->saveDataCustom($newFields, false, $write);
 				}
 				return $dos;
